@@ -26,6 +26,8 @@ mkdir build; cd build
 # provide a default cuda hardware architecture to build for
 cmake -DCMAKE_CUDA_ARCHITECTURES="75" -DPython3_EXECUTABLE=`which python` ..
 make
+
+cmake -DCMAKE_CUDA_ARCHITECTURES="75" -DPython3_EXECUTABLE=`which python` .. && make
 ```
 
 Please note that specifiying `Python3_EXECUTABLE` is not required, but recommended if you have multiple python executable on your system (e.g. one from OS, another from conda, etc...); this way you can control which python installation will be used.
