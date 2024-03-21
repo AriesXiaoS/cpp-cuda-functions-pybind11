@@ -1,5 +1,6 @@
 #include "common.h"
 #include "utils.h"
+#include "define.h"
 
 #include "cuda.cuh"
 #include "check.cuh"
@@ -58,10 +59,10 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
     dim3 dimBlock(8, 8, 8);
     dim3 dimGrid(ceil((float)buf.shape[0] / dimBlock.x), ceil((float)buf.shape[1] / dimBlock.y), ceil((float)buf.shape[2] / dimBlock.z));
 
-    // CudaConv3D 
-    CudaConv3D<<<dimGrid, dimBlock>>>(cuda_vec, cuda_res, 
-                                            cuda_kernel, buf_k.shape[0],
-                                            buf.shape[0], buf.shape[1], buf.shape[2]);
+    Conv3DParam param = { int(buf_k.shape[0]), 
+                          {int(buf.shape[0]), int(buf.shape[1]), int(buf.shape[2])} };
+    // Cuda Con v3D 
+    CudaConv3D<<<dimGrid, dimBlock>>>(cuda_vec, cuda_res, cuda_kernel, param);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 

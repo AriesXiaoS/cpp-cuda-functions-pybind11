@@ -7,17 +7,21 @@
 #include <cuda.h>
 #include <stdio.h> 
 
+#include "define.h"
+
 /**
 * @brief 三维卷积
 * @param input 输入图像 padding之后的图像
 * @param output 输出图像
 * @param kernel 卷积核 k*k*k 立方体
-* @param kernel_size 卷积核大小 = 2*padding + 1
-* @param img_size padding之前的大小，即最终输出的尺寸
+* @param param  相关参数
+    struct Conv3DParam{
+        int kernel_size;
+        int img_shape[3];
+    }
 */
 __global__ void CudaConv3D(float* input, float* output, 
-                           float* kernel, int kernel_size,
-                           int img_size_0, int img_size_1, int img_size_2);
+                           float* kernel, Conv3DParam param);
 
 /**
 *  @brief Householder变换进行QR分解 A = QR
@@ -26,7 +30,7 @@ __global__ void CudaConv3D(float* input, float* output,
 *  @param Q  3x3  float[9]
 *  @param R  3x3  float[9]
 */
-extern __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R);
+__device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R);
 
 /**
 *  @brief 计算3x3矩阵特征值和特征向量
@@ -35,7 +39,7 @@ extern __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R);
 *  @param tolerance 迭代的下三角全0最大容忍值
 *  @return eig_val float[3]  eig_vec float[9]
 */
-extern __device__ __host__ void QREigens_3x3(float* A, 
+__device__ __host__ void QREigens_3x3(float* A, 
                                 float* eig_val, float* eig_vec,
                                 int max_iter = 30, float tolerance = 1e-5);
 
