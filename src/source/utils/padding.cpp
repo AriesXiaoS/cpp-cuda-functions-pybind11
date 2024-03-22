@@ -4,7 +4,8 @@
 
 void PaddingFlattenedArr_3D(float* arr, float* result, 
         int size_0, int size_1, int size_2,
-        float pad_value, int pad_size_0, int pad_size_1, int pad_size_2){
+        float pad_value, int pad_size_0, int pad_size_1, int pad_size_2)
+{
     int new_size_0 = size_0 + 2*pad_size_0;
     int new_size_1 = size_1 + 2*pad_size_1;
     int new_size_2 = size_2 + 2*pad_size_2;

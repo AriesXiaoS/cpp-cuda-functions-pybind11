@@ -3,11 +3,12 @@
 
 
 template <typename T>
-GaussianPartialDerivativeKernel* getGaussianKernels(T sigma, int kernel_size){
+GaussianPartialDerivativeKernel* GetGaussianKernels(T sigma, int kernelSize)
+{
     GaussianPartialDerivativeKernel *kernel = new GaussianPartialDerivativeKernel;
-    kernel->size = kernel_size;
+    kernel->size = kernelSize;
     kernel->sigma = sigma;
-    int flatten_size = kernel_size * kernel_size * kernel_size;
+    int flatten_size = kernelSize * kernelSize * kernelSize;
     kernel->xx = new T[flatten_size];
     kernel->yy = new T[flatten_size];
     kernel->zz = new T[flatten_size];
@@ -17,16 +18,16 @@ GaussianPartialDerivativeKernel* getGaussianKernels(T sigma, int kernel_size){
 
     int x,y,z,idx;
     T same;
-    for(int i=0; i<kernel_size; i++){
-        for(int j=0; j<kernel_size; j++){
-            for(int k=0; k<kernel_size; k++){
-                z = i - kernel_size/2; 
-                y = j - kernel_size/2;
-                x = k - kernel_size/2;
+    for(int i=0; i<kernelSize; i++){
+        for(int j=0; j<kernelSize; j++){
+            for(int k=0; k<kernelSize; k++){
+                z = i - kernelSize/2; 
+                y = j - kernelSize/2;
+                x = k - kernelSize/2;
 
                 same = 1 / (pow(sqrt(2*M_PI),3)*pow(sigma,7)) * exp(-(pow(x,2)+pow(y,2)+pow(z,2))/(2*pow(sigma,2)));
 
-                idx = i*kernel_size*kernel_size + j*kernel_size + k;
+                idx = i*kernelSize*kernelSize + j*kernelSize + k;
 
                 kernel->xx[idx] = (pow(x,2)-pow(sigma,2)) * same;
                 kernel->yy[idx] = (pow(y,2)-pow(sigma,2)) * same;

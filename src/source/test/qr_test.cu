@@ -5,9 +5,9 @@
 #include "check.cuh"
 
 
-
-
-
+__global__ void QRSplitTestKernel_3x3(float* A, float* Q, float* R);
+__global__ void QREigensTestKernel_3x3(float* A, float* eigenValues, float* eigenVectors, 
+                                        int iters = 30, float tolerance = 1e-5);
 
 
 std::vector<py::array_t<float>> QRSplitTest_3x3(py::array_t<float> A, int device){
@@ -78,7 +78,7 @@ std::vector<py::array_t<float>> QRSplitTest_3x3(py::array_t<float> A, int device
 
 
 std::vector<py::array_t<float>> QREigensTest_3x3(py::array_t<float> A, int device,
-                                            int max_iters, float tolerance
+                                            int maxIters, float tolerance
 ){
     auto buf = A.request();
     if(buf.ndim != 2){
@@ -89,50 +89,73 @@ std::vector<py::array_t<float>> QREigensTest_3x3(py::array_t<float> A, int devic
     }
 
     float* ptr = (float*) buf.ptr;
-    auto eig_val_res = py::array_t<float>(3);
-    auto eig_val_res_buf = eig_val_res.request();
-    float* eig_val_res_ptr = (float*) eig_val_res_buf.ptr;
+    auto eigenValue_pyArray = py::array_t<float>(3);
+    auto eigenValue_buf = eigenValue_pyArray.request();
+    float* eigenValue_ptr = (float*) eigenValue_buf.ptr;
 
-    auto eig_vec_res = py::array_t<float>(9);
-    auto eig_vec_res_buf = eig_vec_res.request();
-    float* eig_vec_res_ptr = (float*) eig_vec_res_buf.ptr;
+    auto eigenVector_pyArray = py::array_t<float>(9);
+    auto eigenVector_buf = eigenVector_pyArray.request();
+    float* eigenVector_ptr = (float*) eigenVector_buf.ptr;
 
     if(device < 0){
-        QREigens_3x3(ptr, eig_val_res_ptr, eig_vec_res_ptr, max_iters, tolerance);
+        QREigens_3x3(ptr, eigenValue_ptr, eigenVector_ptr, maxIters, tolerance);
     }else{
-        float* A_device, *eig_val_device, *eig_vec_device;
+        float* A_device, *eigenValue_device, *eigenVector_device;
         cudaSetDevice(device);
         CUDA_CHECK(cudaGetLastError());
         // Allocate memory on the device
         CUDA_CHECK(cudaMalloc((void**)&A_device, 9 * sizeof(float)));
         CUDA_CHECK(cudaMemcpy(A_device, ptr, 9 * sizeof(float), cudaMemcpyHostToDevice));
         // Allocate memory else
-        CUDA_CHECK(cudaMalloc((void**)&eig_val_device, 3 * sizeof(float)));
-        CUDA_CHECK(cudaMalloc((void**)&eig_vec_device, 9 * sizeof(float)));
+        CUDA_CHECK(cudaMalloc((void**)&eigenValue_device, 3 * sizeof(float)));
+        CUDA_CHECK(cudaMalloc((void**)&eigenVector_device, 9 * sizeof(float)));
         // Call the kernel
         dim3 dimBlock(1, 1, 1);
         dim3 dimGrid(1, 1, 1);
-        QREigensTestKernel_3x3<<<dimGrid, dimBlock>>>(A_device, eig_val_device, eig_vec_device, max_iters, tolerance);
+        QREigensTestKernel_3x3<<<dimGrid, dimBlock>>>(A_device, eigenValue_device, eigenVector_device, maxIters, tolerance);
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
         // Copy the result back
-        CUDA_CHECK(cudaMemcpy(eig_val_res_ptr, eig_val_device, 3 * sizeof(float), cudaMemcpyDeviceToHost));
-        CUDA_CHECK(cudaMemcpy(eig_vec_res_ptr, eig_vec_device, 9 * sizeof(float), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(eigenValue_ptr, eigenValue_device, 3 * sizeof(float), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(eigenVector_ptr, eigenVector_device, 9 * sizeof(float), cudaMemcpyDeviceToHost));
         // Free the memory
         CUDA_CHECK(cudaFree(A_device));
-        CUDA_CHECK(cudaFree(eig_val_device));
+        CUDA_CHECK(cudaFree(eigenValue_device));
     }
 
-    eig_vec_res.resize({3,3});
+    eigenVector_pyArray.resize({3,3});
     
     std::vector<py::array_t<float>> result;
-    result.push_back(eig_val_res);
-    result.push_back(eig_vec_res);
+    result.push_back(eigenValue_pyArray);
+    result.push_back(eigenVector_pyArray);
 
     return result;
 }
 
 
+
+
+
+////////////////// TEST 
+
+__global__ void QRSplitTestKernel_3x3(float* A, float* Q, float* R){
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int z = blockIdx.z * blockDim.z + threadIdx.z;
+    if(x==0 && y==0 && z==0){
+        QRSplit_3x3(A, Q, R);
+    }
+}
+
+__global__ void QREigensTestKernel_3x3(float* A, float* eigenValues, float* eigenVectors, 
+                                        int iters, float tolerance){
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int z = blockIdx.z * blockDim.z + threadIdx.z;
+    if(x==0 && y==0 && z==0){
+        QREigens_3x3(A, eigenValues, eigenVectors, iters, tolerance);
+    }
+}
 
 
 

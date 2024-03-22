@@ -3,7 +3,8 @@
 
 #include "cuda.cuh"
 
-void PrintDeviceInfo(){    
+void PrintDeviceInfo()
+{    
     int count;
     cudaDeviceProp prop;
     cudaGetDeviceCount(&count);

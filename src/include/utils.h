@@ -22,7 +22,8 @@ struct GaussianPartialDerivativeKernel{
     float* xz;
     float* yz;
 };
-
+template <typename T>
+GaussianPartialDerivativeKernel* GetGaussianKernels(T sigma, int kernelSize);
 
 
 

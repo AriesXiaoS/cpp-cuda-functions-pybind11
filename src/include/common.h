@@ -24,8 +24,10 @@ py::array_t<float> Padding3dTest(py::array_t<float> vec, float pad_value, int pa
 py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> kernel, int device);
 std::vector<py::array_t<float>> QRSplitTest_3x3(py::array_t<float> A, int device);
 std::vector<py::array_t<float>> QREigensTest_3x3(py::array_t<float> A, int device,
-                                            int max_iters, float tolerance);
-
+                                            int maxIters, float tolerance);
+map<string, py::array_t<float>> HessianEigenTest_3x3(
+    py::array_t<float> A, int vecType,
+    int device, int maxIters, float tolerance);
 
 
 

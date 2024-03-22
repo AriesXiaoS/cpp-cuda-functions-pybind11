@@ -1,4 +1,4 @@
-
+#include "define.h"
 #include "cuda.cuh"
 
 __device__ __host__ float normVec(float x1, float x2, float x3){
@@ -166,9 +166,9 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R){
     TransposeMatrix(P, 3, 3, Q);
 }
 
-__device__ __host__ void QREigens_3x3(float* A, 
-                                float* eig_val, float* eig_vec,
-                                int max_iter, float tolerance){
+__device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigenVectors,
+                                int maxIters, float tolerance)
+{
     //
     float *Q = new float[9]{1, 0, 0, 0, 1, 0, 0, 0, 1};
     float *Q_temp = new float[9];
@@ -176,7 +176,7 @@ __device__ __host__ void QREigens_3x3(float* A,
     float *AK = new float[9];
     float temp;
     if(tolerance <= 0){
-        for(int i=0; i<max_iter; i++){
+        for(int i=0; i<maxIters; i++){
             // A = QR
             QRSplit_3x3(A, Q_temp, R);
             // Q右边累乘 Q = Q * Q_temp
@@ -189,30 +189,30 @@ __device__ __host__ void QREigens_3x3(float* A,
         // printf("A %f %f %f \n", A[3], A[6], A[7]);
         printf(" no tolerance \n");
     }else{
-        for(int i=0; i<max_iter; i++){
+        for(int i=0; i<maxIters; i++){
             QRSplit_3x3(A, Q_temp, R);
             MatrixDotSelf3x3(Q, Q_temp);
             MatrixDot3x3(R, Q_temp, A);
             MatrixDot3x3(Q_temp, R, AK);
             if( abs(AK[3])<=tolerance && abs(AK[6])<=tolerance && abs(AK[7])<=tolerance){
-                printf(" iter = %d  %f %f %f \n", i, AK[3], AK[6], AK[7]);
+                // printf(" iter = %d  %f %f %f \n", i, AK[3], AK[6], AK[7]);
                 break;
             }
         }
     }
-    eig_val[0] = AK[0];
-    eig_val[1] = AK[4];
-    eig_val[2] = AK[8];
+    eigenValues[0] = AK[0];
+    eigenValues[1] = AK[4];
+    eigenValues[2] = AK[8];
     // 排序 绝对值从小到大
     for(int i=0; i<2; i++){
         for(int j=i+1; j<3; j++){
-            if(abs(eig_val[i]) > abs(eig_val[j])){
+            if(abs(eigenValues[i]) > abs(eigenValues[j])){
                 // 特征值
-                temp = eig_val[i];
-                eig_val[i] = eig_val[j];
-                eig_val[j] = temp;
+                temp = eigenValues[i];
+                eigenValues[i] = eigenValues[j];
+                eigenValues[j] = temp;
                 // 特征向量
-                if(eig_vec != nullptr){
+                if(eigenVectors != nullptr){
                     for(int k=0; k<3; k++){
                         temp = Q[3*k+i];
                         Q[3*k+i] = Q[3*k+j];
@@ -222,19 +222,12 @@ __device__ __host__ void QREigens_3x3(float* A,
             }
         }
     }
-    if(eig_vec != nullptr){
-        // eig_vec = Q
-        MatrixCopy(Q, eig_vec, 9);    
+    if(eigenVectors != nullptr){
+        // eigenVectors = Q
+        MatrixCopy(Q, eigenVectors, 9);    
     }
 }
 
-__global__ void cudaHessianEigen(
-    float* Ixx, float* Iyy, float* Izz, float* Ixy, float* Ixz, float* Iyz,
-    float* eig_val_0, float* eig_val_1, float* eig_val_2, 
-    float* eig_vec_0, float* eig_vec_1, float* eig_vec_2,
-    int* img_shape, 
-    int max_iter, float tolerance
-){}
 
 
 
@@ -246,29 +239,6 @@ __global__ void cudaHessianEigen(
 
 
 
-
-
-
-////////////////// TEST 
-
-__global__ void QRSplitTestKernel_3x3(float* A, float* Q, float* R){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    int z = blockIdx.z * blockDim.z + threadIdx.z;
-    if(x==0 && y==0 && z==0){
-        QRSplit_3x3(A, Q, R);
-    }
-}
-
-__global__ void QREigensTestKernel_3x3(float* A, float* eig_val, float* eig_vec, 
-                                        int iters, float tolerance){
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    int z = blockIdx.z * blockDim.z + threadIdx.z;
-    if(x==0 && y==0 && z==0){
-        QREigens_3x3(A, eig_val, eig_vec, iters, tolerance);
-    }
-}
 
 
 

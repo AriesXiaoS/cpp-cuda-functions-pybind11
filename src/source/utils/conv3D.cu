@@ -4,7 +4,8 @@
 
 
 __global__ void CudaConv3D(float* input, float* output, 
-                           float* kernel, Conv3DParam param){
+                           float* kernel, Conv3DParam param)
+{
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int z = blockIdx.z * blockDim.z + threadIdx.z;

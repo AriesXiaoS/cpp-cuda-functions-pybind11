@@ -2,55 +2,56 @@ import cuda_functions as cf
 import numpy as np
 import time
 
-cf.device_info()
-
-print('### Test add_np ###')
+# cf.device_info()
 
 T = np.float32
 SIZE = (10, 10, 10)
-a = np.random.rand(*SIZE).astype(T)
-b = np.random.rand(*SIZE).astype(T)
 
-res_np = a + b 
-res_cuda = cf.add_np(a, b, 0) 
-print(f'allclose: {np.allclose(res_cuda, res_np)}')
+def test_add():
+    print('### Test add_np ###')
+    a = np.random.rand(*SIZE).astype(T)
+    b = np.random.rand(*SIZE).astype(T)
 
+    res_np = a + b 
+    res_cuda = cf.add_np(a, b, 0) 
+    print(f'allclose: {np.allclose(res_cuda, res_np)}')
 
-print('### Test padding ###')
-# padding
-a = np.random.rand(*SIZE).astype(T)
-pad_val = 0.3
-pad_size = 2
-res_cuda = cf.padding_3d_test(a, pad_val, pad_size, pad_size, pad_size)
-res_np = np.pad(a, pad_size, mode='constant', constant_values=pad_val) # warm up
-print(f'allclose: {np.allclose(res_cuda, res_np)}')
+def test_padding():
+    print('### Test padding ###')
+    # padding
+    a = np.random.rand(*SIZE).astype(T)
+    pad_val = 0.3
+    pad_size = 2
+    res_cuda = cf.padding_3d_test(a, pad_val, pad_size, pad_size, pad_size)
+    res_np = np.pad(a, pad_size, mode='constant', constant_values=pad_val) # warm up
+    print(f'allclose: {np.allclose(res_cuda, res_np)}')
 
+def test_conv():
+    print('### Test conv3D ###')
+    def conv3D_np(input, kernel):
+        padding = (kernel.shape[0] -1 )// 2
+        img = np.pad(input, padding, mode='constant', constant_values=0)
+        res = np.zeros_like(input)
+        for i in range(input.shape[0]):
+            for j in range(input.shape[1]):
+                for k in range(input.shape[2]):
+                    res[i,j,k] = np.sum(img[i:i+kernel.shape[0], j:j+kernel.shape[1], k:k+kernel.shape[2]] * kernel)
+        return res
+    #
 
-print('### Test conv3D ###')
-def conv3D_np(input, kernel):
-    padding = (kernel.shape[0] -1 )// 2
-    img = np.pad(input, padding, mode='constant', constant_values=0)
-    res = np.zeros_like(input)
-    for i in range(input.shape[0]):
-        for j in range(input.shape[1]):
-            for k in range(input.shape[2]):
-                res[i,j,k] = np.sum(img[i:i+kernel.shape[0], j:j+kernel.shape[1], k:k+kernel.shape[2]] * kernel)
-    return res
-#
+    A_SIZE = (10,10,10)
+    A = np.random.rand(*A_SIZE).astype(T)
+    K_SIZE = (5,5,5)
+    kernel = np.random.rand(*K_SIZE).astype(T)
 
-A_SIZE = (10,10,10)
-A = np.random.rand(*A_SIZE).astype(T)
-K_SIZE = (5,5,5)
-kernel = np.random.rand(*K_SIZE).astype(T)
-
-t0 = time.time()
-res_cuda = cf.cuda_conv_3d_test(A, kernel, 0)
-cuda_time = time.time() - t0
-t0 = time.time()
-res_np = conv3D_np(A, kernel)
-np_time = time.time() - t0
-print(f'allclose: {np.allclose(res_cuda, res_np)}')
-print(f'cuda_time: {cuda_time:.6f}, np_time: {np_time:.6f}')
+    t0 = time.time()
+    res_cuda = cf.cuda_conv_3d_test(A, kernel, 0)
+    cuda_time = time.time() - t0
+    t0 = time.time()
+    res_np = conv3D_np(A, kernel)
+    np_time = time.time() - t0
+    print(f'allclose: {np.allclose(res_cuda, res_np)}')
+    print(f'cuda_time: {cuda_time:.6f}, np_time: {np_time:.6f}')
 
 
 #QR分解
@@ -127,64 +128,93 @@ def  qrEgis(A):
                 Q[:,j]=r
     return [e,Q]
 
+def test_qr():
 
-print('### Test QR Split ###')
+    print('### Test QR Split ###')
 
-A = np.array([[1,2,3],
-              [2,3,4],
-              [3,4,5]]).astype(np.float32)
-print(f'A: \n{A}')
-qr_py = qrSplit(A)
-qr_cpu = cf.qr_split_test_3x3(A.copy(), -1)
-qr_cuda = cf.qr_split_test_3x3(A.copy(), 0)
-qr_np = np.linalg.qr(A.copy())
+    A = np.array([[1,2,3],
+                [2,3,4],
+                [3,4,5]]).astype(np.float32)
+    print(f'A: \n{A}')
+    qr_py = qrSplit(A)
+    qr_cpu = cf.qr_split_test_3x3(A.copy(), -1)
+    qr_cuda = cf.qr_split_test_3x3(A.copy(), 0)
+    qr_np = np.linalg.qr(A.copy())
 
-def compareQRSplit(a, b, name):
-    # if np.allclose(a, b):
-    if np.allclose(a, b, 1e-6, 1e-6):
-        print(f'{name} allclose')
-    else:
-        print(f'{name} not allclose: \n{a} \n{b}')
+    def compareQRSplit(a, b, name):
+        # if np.allclose(a, b):
+        if np.allclose(a, b, 1e-6, 1e-6):
+            print(f'{name} allclose')
+        else:
+            print(f'{name} not allclose: \n{a} \n{b}')
 
-## py
-A_py = np.dot(qr_py[0], qr_py[1])
-print(f'py : \n{A_py}')
+    ## py
+    A_py = np.dot(qr_py[0], qr_py[1])
+    print(f'py : \n{A_py}')
 
-A_cpu = np.dot(qr_cpu[0], qr_cpu[1])
-print(f'cpu: \n{A_cpu}')
+    A_cpu = np.dot(qr_cpu[0], qr_cpu[1])
+    print(f'cpu: \n{A_cpu}')
 
-A_cuda = np.dot(qr_cuda[0], qr_cuda[1])
-print(f'cuda: \n{A_cuda}')
+    A_cuda = np.dot(qr_cuda[0], qr_cuda[1])
+    print(f'cuda: \n{A_cuda}')
 
-compareQRSplit(qr_py[0], qr_cpu[0], 'cpu Q')
-compareQRSplit(qr_py[1], qr_cpu[1], 'cpu R')
+    compareQRSplit(qr_py[0], qr_cpu[0], 'cpu Q')
+    compareQRSplit(qr_py[1], qr_cpu[1], 'cpu R')
 
-compareQRSplit(qr_py[0], qr_cuda[0], 'cuda Q')
-compareQRSplit(qr_py[1], qr_cuda[1], 'cuda R')
+    compareQRSplit(qr_py[0], qr_cuda[0], 'cuda Q')
+    compareQRSplit(qr_py[1], qr_cuda[1], 'cuda R')
 
-# compareQRSplit(qr_py[0], qr_np[0], 'np Q')
-# compareQRSplit(qr_py[1], qr_np[1], 'np R')
+    # compareQRSplit(qr_py[0], qr_np[0], 'np Q')
+    # compareQRSplit(qr_py[1], qr_np[1], 'np R')
+
+def test_qr_eigen():
+    print('### Test QR Eigens ###')
+
+    A = np.random.rand(3**2).reshape(3,3)
+    A = np.triu(A)
+    A += A.T - np.diag(A.diagonal())
+    print(A)
+
+    eig_np = np.linalg.eig(A.copy())
+    eig_py = qrEgis(A.copy())
+    eig_cpu = cf.qr_eigens_test_3x3(A.copy(),-1, 10, 0)
+    eig_cuda = cf.qr_eigens_test_3x3(A.copy(), -1, 100, 5e-4)
+    print(f'np eig: \n{eig_np[0]}')
+    print(f'py eig: \n{eig_py[0]}')
+    print(f'cpu eig: \n{eig_cpu[0]}')
+    print(f'cuda eig: \n{eig_cuda[0]}')
+
+    print(f'np eig vec: \n{eig_np[1]}')
+    print(f'py eig vec: \n{eig_py[1]}')
+    print(f'cpu eig vec: \n{eig_cpu[1]}')
+    print(f'cuda eig vec: \n{eig_cuda[1]}')
+
+def test_hessian_eigen():
+    print('### Test Hessian Eigens ###')
+    A = np.random.rand(3**2).reshape(3,3)
+    A = np.triu(A)
+    A += A.T - np.diag(A.diagonal())
+    print(A)
+
+    res = cf.hessian_eigens_test_3x3(A.copy())
+    eig_cuda = cf.qr_eigens_test_3x3(A.copy())
+    eig_np = np.linalg.eig(A.copy())
+
+    print(f'hessian eig: \n{res["eigenValues"]}')
+    print(f'hessian eig vec: \n{res["eigenVectors"]}')
+
+    print(f'np eig: \n{eig_np[0]}')
+    print(f'np eig vec: \n{eig_np[1]}')
+
+    print(f'cuda eig: \n{eig_cuda[0]}')
+    print(f'cuda eig vec: \n{eig_cuda[1]}')
 
 
-print('### Test QR Eigens ###')
 
-A = np.random.rand(3**2).reshape(3,3)
-A = np.triu(A)
-A += A.T - np.diag(A.diagonal())
-print(A)
+if __name__=='__main__':
+    
+    # test_qr_eigen()
 
-eig_np = np.linalg.eig(A.copy())
-eig_py = qrEgis(A.copy())
-eig_cpu = cf.qr_eigens_test_3x3(A.copy(),-1, 10, 0)
-eig_cuda = cf.qr_eigens_test_3x3(A.copy(), -1, 100, 5e-4)
-print(f'np eig: \n{eig_np[0]}')
-print(f'py eig: \n{eig_py[0]}')
-print(f'cpu eig: \n{eig_cpu[0]}')
-print(f'cuda eig: \n{eig_cuda[0]}')
-
-print(f'np eig vec: \n{eig_np[1]}')
-print(f'py eig vec: \n{eig_py[1]}')
-print(f'cpu eig vec: \n{eig_cpu[1]}')
-print(f'cuda eig vec: \n{eig_cuda[1]}')
-
+    test_hessian_eigen()
+    
 

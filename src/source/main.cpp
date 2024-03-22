@@ -17,9 +17,11 @@ PYBIND11_MODULE(cuda_functions, m)
 
     m.def("qr_eigens_test_3x3", &QREigensTest_3x3, "test",
         py::arg("A"), py::arg("device") = -1, 
-        py::arg("max_iters") = 30, py::arg("tolerance") = 1e-5 );
+        py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5 );
 
-
+    m.def("hessian_eigens_test_3x3", &HessianEigenTest_3x3, "test",
+        py::arg("A"), py::arg("vecType") = 1, py::arg("device") = 0, 
+        py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5 );
 
 
 

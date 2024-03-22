@@ -9,6 +9,8 @@
 
 #include "define.h"
 
+//
+
 /**
 * @brief 三维卷积
 * @param input 输入图像 padding之后的图像
@@ -17,7 +19,7 @@
 * @param param  相关参数
     struct Conv3DParam{
         int kernel_size;
-        int img_shape[3];
+        int img_shape[3]; 未padding的shape
     }
 */
 __global__ void CudaConv3D(float* input, float* output, 
@@ -37,18 +39,24 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R);
 *  @param A 输入矩阵 3x3  float[9]
 *  @param max_iter 最大迭代次数
 *  @param tolerance 迭代的下三角全0最大容忍值
-*  @return eig_val float[3]  eig_vec float[9]
+*  @return eigenValues float[3]  eigenVectors float[9]
 */
-__device__ __host__ void QREigens_3x3(float* A, 
-                                float* eig_val, float* eig_vec,
-                                int max_iter = 30, float tolerance = 1e-5);
+__device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigenVectors,
+                                int maxIters, float tolerance);
 
-// just test
-__global__ void QRSplitTestKernel_3x3(float* A, float* Q, float* R);
-__global__ void QREigensTestKernel_3x3(float* A, float* eig_val, float* eig_vec, 
-                                        int iters = 30, float tolerance = 1e-5);
-
-
+/**
+*  @brief Hessian矩阵特征值计算
+*/
+__global__ void CudaHessianEigen(Hessian3D *hessian, Eigen3D *eigen, float* HFnorm);
+// 设置Hessian相关变量  
+__global__ void SetHessianParams(
+    int imgShape_0, int imgShape_1, int imgShape_2,
+    int maxIters, float tolerance, int eigenVectorType);
 #endif 
 
-
+__global__ void CudaFrangiVo(Eigen3D *eigen, float* output);
+// 设置Frangi相关变量
+__global__ void SetFrangiParams(
+    int imgShape_0, int imgShape_1, int imgShape_2,
+    float alpha, float beta, float c, bool black_ridges);
+    
