@@ -18,27 +18,31 @@ struct QRIterParam{
     float tolerance;
 };
 
-struct Hessian3D{ // 3D 图像的 Hessian 矩阵 3x3
-    float* Ixx;
-    float* Iyy;
-    float* Izz;
-    float* Ixy;
-    float* Ixz;
-    float* Iyz;
+// Second Derivative Matrix 3D
+struct SDM3D{
+    float* xx;
+    float* yy;
+    float* zz;
+    float* xy;
+    float* xz;
+    float* yz;
 };
+
 struct Eigen3D{ // 3D 图像Hessian矩阵的特征值和特征向量
     float* eigenValues;
     float* eigenVectors;
 };
-struct FrangiParam{
-    float alpha;
-    float beta;
-    float gamma; // c
-    bool blackRidges;
-    float* sigmas; // gaussian sigmas 
-    int maxIters;
-    float tolerance;
-    int eigenVectorType;
+struct EigenTemp{
+    float* A;
+    float* Q;
+    float* R;
+    float* P;
+
+    float* w1;
+    float* w2;
+    float* H1;
+    float* H2;
+    float* h2;
 };
 
 

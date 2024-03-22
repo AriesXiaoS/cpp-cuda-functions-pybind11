@@ -1,13 +1,12 @@
 #include "common.h"
 #include "utils.h"
+#include "define.h"
 
 
 template <typename T>
-GaussianPartialDerivativeKernel* GetGaussianKernels(T sigma, int kernelSize)
+SDM3D* GetGaussianKernels(T sigma, int kernelSize)
 {
-    GaussianPartialDerivativeKernel *kernel = new GaussianPartialDerivativeKernel;
-    kernel->size = kernelSize;
-    kernel->sigma = sigma;
+    SDM3D *kernel = new SDM3D();
     int flatten_size = kernelSize * kernelSize * kernelSize;
     kernel->xx = new T[flatten_size];
     kernel->yy = new T[flatten_size];
@@ -41,3 +40,12 @@ GaussianPartialDerivativeKernel* GetGaussianKernels(T sigma, int kernelSize)
     }
     return kernel;
 }
+
+
+
+
+template SDM3D* GetGaussianKernels<float>(float sigma, int kernelSize);
+
+
+
+

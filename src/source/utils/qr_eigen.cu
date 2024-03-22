@@ -124,6 +124,7 @@ __device__ __host__ void TransposeMatrix(float* A, int m, int n, float* B){
 
 __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R){
     //
+    printf("QRSplit_3x3 before \n");
     float *w1 = new float[3]; // vec
     float *w2 = new float[2]; // vec
     float *H1 = new float[9]; // matrix 3x3
@@ -131,7 +132,7 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R){
     float *h2 = new float[4]; // matrix 2x2
     float *P = new float[9];  // matrix 3x3
     float x_norm, x_y_norm;
-
+    printf("QRSplit_3x3 \n");
     // 3x3
     x_norm = normVec(A[0], A[3], A[6]); // A第一列 x
     // y = [x_norm, 0, 0].T
@@ -146,6 +147,7 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R){
     // R1 = H1 * A
     MatrixDot3x3(H1, A, R);
     //
+    printf("2x2 \n");
     // 2x2
     x_norm = normVec(R[4], R[7]);
     x_y_norm = normVec(R[4]-x_norm, R[7]);
@@ -166,7 +168,8 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R){
     TransposeMatrix(P, 3, 3, Q);
 }
 
-__device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigenVectors,
+__device__ __host__ void QREigens_3x3(float* A, 
+                                float* eigenValues, float* eigenVectors,
                                 int maxIters, float tolerance)
 {
     //
@@ -187,30 +190,41 @@ __device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigen
         // AK = Q_temp dot R
         MatrixDot3x3(Q_temp, R, AK);
         // printf("A %f %f %f \n", A[3], A[6], A[7]);
-        printf(" no tolerance \n");
+        // printf(" no tolerance \n");
     }else{
+        // printf("start iter \n");
         for(int i=0; i<maxIters; i++){
+            printf("iter # %d \n", i);
             QRSplit_3x3(A, Q_temp, R);
+            printf("l1 ");
             MatrixDotSelf3x3(Q, Q_temp);
+            printf("l2 ");
             MatrixDot3x3(R, Q_temp, A);
+            printf("l3 ");
             MatrixDot3x3(Q_temp, R, AK);
             if( abs(AK[3])<=tolerance && abs(AK[6])<=tolerance && abs(AK[7])<=tolerance){
                 // printf(" iter = %d  %f %f %f \n", i, AK[3], AK[6], AK[7]);
                 break;
             }
         }
+        printf("iter done #\n");
     }
+    printf("AK %f %f %f \n", AK[0], AK[4], AK[8]);
     eigenValues[0] = AK[0];
     eigenValues[1] = AK[4];
     eigenValues[2] = AK[8];
+    printf("eigenValues %f %f %f \n", eigenValues[0], eigenValues[1], eigenValues[2]);
     // 排序 绝对值从小到大
     for(int i=0; i<2; i++){
+        printf("i %d value %f \n", i, eigenValues[i]);
         for(int j=i+1; j<3; j++){
             if(abs(eigenValues[i]) > abs(eigenValues[j])){
                 // 特征值
+                printf(" swap ");
                 temp = eigenValues[i];
                 eigenValues[i] = eigenValues[j];
                 eigenValues[j] = temp;
+                printf(" swaped ");
                 // 特征向量
                 if(eigenVectors != nullptr){
                     for(int k=0; k<3; k++){
@@ -218,13 +232,20 @@ __device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigen
                         Q[3*k+i] = Q[3*k+j];
                         Q[3*k+j] = temp;
                     }                
+                }else{
+                    printf("qr no vec");
+                
                 }
             }
         }
     }
     if(eigenVectors != nullptr){
         // eigenVectors = Q
+        printf("qr vec \n");
         MatrixCopy(Q, eigenVectors, 9);    
+
+    }else{
+        printf("qr no vec");
     }
 }
 

@@ -1,6 +1,7 @@
-import cuda_functions as cf
+import cpp_cuda_functions as cf
 import numpy as np
 import time
+import SimpleITK as sitk    
 
 # cf.device_info()
 
@@ -209,12 +210,32 @@ def test_hessian_eigen():
     print(f'cuda eig: \n{eig_cuda[0]}')
     print(f'cuda eig vec: \n{eig_cuda[1]}')
 
+def frangiTest():
+    img_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_img.nii.gz'
+    res_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_frangi.nii.gz'
+
+    image = sitk.ReadImage(img_path)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    spacing = image.GetSpacing()
+    origin = image.GetOrigin()
+    direction = image.GetDirection()
+
+    frangi = cf.frangi3D(img, eigenVectorType = 0)
+    res = sitk.GetImageFromArray(frangi)
+    res.SetSpacing(spacing)
+    res.SetOrigin(origin)
+    res.SetDirection(direction)
+
+    sitk.WriteImage(res, res_path)
 
 
 if __name__=='__main__':
     
+    # test_conv()
     # test_qr_eigen()
 
-    test_hessian_eigen()
+    # test_hessian_eigen()
+
+    frangiTest()
     
 

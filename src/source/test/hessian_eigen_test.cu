@@ -22,22 +22,22 @@ map<string, py::array_t<float>> HessianEigenTest_3x3(
     cudaSetDevice(device);
     CUDA_CHECK(cudaGetLastError());
 
-    Hessian3D* hessian = new Hessian3D();
-    Hessian3D* hessian_d;    
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Ixx, sizeof(float) * 2));
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Iyy, sizeof(float) * 2));
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Izz, sizeof(float) * 2));
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Ixy, sizeof(float) * 2));
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Ixz, sizeof(float) * 2));
-    CUDA_CHECK(cudaMalloc((void**)&hessian->Iyz, sizeof(float) * 2));
-    CUDA_CHECK(cudaMemcpy(hessian->Ixx, ptr, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(hessian->Iyy, ptr + 4, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(hessian->Izz, ptr + 8, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(hessian->Ixy, ptr + 1, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(hessian->Ixz, ptr + 2, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(hessian->Iyz, ptr + 5, sizeof(float) * 2, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMalloc((void**)&hessian_d, sizeof(Hessian3D)));
-    CUDA_CHECK(cudaMemcpy(hessian_d, hessian, sizeof(Hessian3D), cudaMemcpyHostToDevice));
+    SDM3D* hessian = new SDM3D();
+    SDM3D* hessian_d;    
+    CUDA_CHECK(cudaMalloc((void**)&hessian->xx, sizeof(float) * 2));
+    CUDA_CHECK(cudaMalloc((void**)&hessian->yy, sizeof(float) * 2));
+    CUDA_CHECK(cudaMalloc((void**)&hessian->zz, sizeof(float) * 2));
+    CUDA_CHECK(cudaMalloc((void**)&hessian->xy, sizeof(float) * 2));
+    CUDA_CHECK(cudaMalloc((void**)&hessian->xz, sizeof(float) * 2));
+    CUDA_CHECK(cudaMalloc((void**)&hessian->yz, sizeof(float) * 2));
+    CUDA_CHECK(cudaMemcpy(hessian->xx, ptr, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(hessian->yy, ptr + 4, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(hessian->zz, ptr + 8, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(hessian->xy, ptr + 1, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(hessian->xz, ptr + 2, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(hessian->yz, ptr + 5, sizeof(float) * 2, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMalloc((void**)&hessian_d, sizeof(SDM3D)));
+    CUDA_CHECK(cudaMemcpy(hessian_d, hessian, sizeof(SDM3D), cudaMemcpyHostToDevice));
 
     Eigen3D* eigen = new Eigen3D();
     Eigen3D* eigen_d;
@@ -78,12 +78,12 @@ map<string, py::array_t<float>> HessianEigenTest_3x3(
     result["eigenVectors"] = eigenVector_pyArray;
 
     // 释放内存
-    CUDA_CHECK(cudaFree(hessian->Ixx));
-    CUDA_CHECK(cudaFree(hessian->Iyy));
-    CUDA_CHECK(cudaFree(hessian->Izz));
-    CUDA_CHECK(cudaFree(hessian->Ixy));
-    CUDA_CHECK(cudaFree(hessian->Ixz));
-    CUDA_CHECK(cudaFree(hessian->Iyz));
+    CUDA_CHECK(cudaFree(hessian->xx));
+    CUDA_CHECK(cudaFree(hessian->yy));
+    CUDA_CHECK(cudaFree(hessian->zz));
+    CUDA_CHECK(cudaFree(hessian->xy));
+    CUDA_CHECK(cudaFree(hessian->xz));
+    CUDA_CHECK(cudaFree(hessian->yz));
 
     CUDA_CHECK(cudaFree(eigen->eigenValues));
     CUDA_CHECK(cudaFree(eigen->eigenVectors));

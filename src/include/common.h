@@ -16,6 +16,19 @@ using namespace std;
 using namespace chrono;
 namespace py = pybind11;
 
+// Frangi 
+map<string, py::array_t<float>> CudaFrangi3D(
+    py::array_t<float> image, int device, std::vector<float> sigmas,
+    float alpha, float beta, float gamma, bool blackRidges,
+    int maxIters, float tolerance, int eigenVectorType);
+
+
+
+
+
+
+
+
 // TEST
 void PrintDeviceInfo();
 map<string, py::array_t<float>> MapDictTest();

@@ -1,6 +1,7 @@
 #ifndef _UTILS_H
 #define _UTILS_H
 
+#include "define.h"
 
 /**
 * @brief Padding 三维数组 但在一维层面
@@ -12,23 +13,14 @@ void PaddingFlattenedArr_3D(float* arr, float* result,
 /**
 * @brief 高斯核二阶导
 */
-struct GaussianPartialDerivativeKernel{
-    int size;
-    float sigma;
-    float* xx;
-    float* yy;
-    float* zz;
-    float* xy;
-    float* xz;
-    float* yz;
-};
 template <typename T>
-GaussianPartialDerivativeKernel* GetGaussianKernels(T sigma, int kernelSize);
+SDM3D* GetGaussianKernels(T sigma, int kernelSize);
 
 
-
-
-
+void FreeSDM3D(SDM3D* x);
+// 只是把hessian3D的子元素分配显存
+void CudaMallocSDM3D(SDM3D* item, int imageSize);
+void CudaFreeSDM3D(SDM3D* item);
 
 
 

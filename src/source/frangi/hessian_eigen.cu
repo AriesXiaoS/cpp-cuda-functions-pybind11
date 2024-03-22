@@ -25,20 +25,25 @@ __global__ void SetHessianParams(
     }
 }
 
-__global__ void CudaHessianEigen(Hessian3D *hessian, Eigen3D *eigen, float* HFnorm)
+__global__ void CudaHessianEigen(SDM3D *hessian, Eigen3D *eigen, float* HFnorm)
 {
     int z = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int x = blockIdx.z * blockDim.z + threadIdx.z;    
+    // printf("gridDim %d %d %d\n", gridDim.x, gridDim.y, gridDim.z);
     if( z < imgShape_d[0] && y < imgShape_d[1] && x < imgShape_d[2] ){
         // printf("imgshape: %d %d %d\n", imgShape_d[0], imgShape_d[1], imgShape_d[2]);
+        // printf("zyx %d %d %d\n", z, y, x);
+        // if(z>200) printf("zyx %d %d %d\n", z, y, x);
         int idx = z * imgShape_d[1] * imgShape_d[2] + y * imgShape_d[2] + x;
         float* A;
         cudaMalloc((void**)&A, 9 * sizeof(float));
-        A[0] = hessian->Ixx[idx]; A[1] = hessian->Ixy[idx]; A[2] = hessian->Ixz[idx];
-        A[3] = hessian->Ixy[idx]; A[4] = hessian->Iyy[idx]; A[5] = hessian->Iyz[idx];
-        A[6] = hessian->Ixz[idx]; A[7] = hessian->Iyz[idx]; A[8] = hessian->Izz[idx];
+        // printf("idx %d  hessian %f", idx, hessian->xx[idx]);
+        A[0] = hessian->xx[idx]; A[1] = hessian->xy[idx]; A[2] = hessian->xz[idx];
+        A[3] = hessian->xy[idx]; A[4] = hessian->yy[idx]; A[5] = hessian->yz[idx];
+        A[6] = hessian->xz[idx]; A[7] = hessian->yz[idx]; A[8] = hessian->zz[idx];
         //
+        // printf("A: %f %f %f\n", A[0], A[1], A[2]);
         float* eigenValues;
         cudaMalloc((void**)&eigenValues, 3 * sizeof(float));
         float* eigenVectors;
@@ -49,7 +54,7 @@ __global__ void CudaHessianEigen(Hessian3D *hessian, Eigen3D *eigen, float* HFno
         }
         // QR 
         QREigens_3x3(A, eigenValues, eigenVectors, maxIters_d, tolerance_d);
-
+        printf("QREigens done \n");
         eigen->eigenValues[idx*3    ] = eigenValues[0];
         eigen->eigenValues[idx*3 + 1] = eigenValues[1];
         eigen->eigenValues[idx*3 + 2] = eigenValues[2];

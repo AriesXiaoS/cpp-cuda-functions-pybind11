@@ -41,13 +41,14 @@ __device__ __host__ void QRSplit_3x3(float* A, float* Q, float* R);
 *  @param tolerance 迭代的下三角全0最大容忍值
 *  @return eigenValues float[3]  eigenVectors float[9]
 */
-__device__ __host__ void QREigens_3x3(float* A, float* eigenValues, float* eigenVectors,
+__device__ __host__ void QREigens_3x3(float* A, 
+                                float* eigenValues, float* eigenVectors,
                                 int maxIters, float tolerance);
 
 /**
 *  @brief Hessian矩阵特征值计算
 */
-__global__ void CudaHessianEigen(Hessian3D *hessian, Eigen3D *eigen, float* HFnorm);
+__global__ void CudaHessianEigen(SDM3D *hessian, Eigen3D *eigen, float* HFnorm);
 // 设置Hessian相关变量  
 __global__ void SetHessianParams(
     int imgShape_0, int imgShape_1, int imgShape_2,

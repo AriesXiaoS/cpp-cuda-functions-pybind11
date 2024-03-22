@@ -14,6 +14,7 @@ __global__ void KernelAdd
         res[idx] = vec1[idx] + vec2[idx];
     }
 }
+
 template <typename T>
 void CudaAdd(T* vec1, T* vec2, T* res, int num_elements){
     T* cuda_vec1, *cuda_vec2, *cuda_res;
