@@ -71,6 +71,8 @@ map<string, py::array_t<float>> CudaFrangi3D(
     int maxIters, float tolerance, int eigenVectorType)
 {
     auto img = image.request();
+    printf("img type ");
+    cout << img.format << endl;
     if(img.ndim != 3) throw std::runtime_error("Number of dimensions must be 3");
     if(device<0) throw std::runtime_error("Device number must be non-negative");
     if(alpha<0) throw std::runtime_error("Alpha must be non-negative");
@@ -177,10 +179,19 @@ map<string, py::array_t<float>> CudaFrangi3D(
     float* frangi = VoMax(outputs, sigmas.size(), imageSize);
 
     auto frangi_pyArr = py::array_t<float>(imageSize, frangi);
+
+    // auto buf_res = frangi_pyArr.request();
+    // float* ptr_res = (float*) buf_res.ptr;
+
+    // for(int i=0; i<imageSize; i++)
+    // {
+    //     ptr_res[i] = frangi[i];
+    // }
+
     frangi_pyArr.resize({imgShape[0], imgShape[1], imgShape[2]});
 
     map<string, py::array_t<float>> result;
-    result["frangi"] = py::array_t<float>(imageSize, frangi);
+    result["frangi"] = frangi_pyArr;
 
     return result;
 

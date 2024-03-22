@@ -215,13 +215,14 @@ def frangiTest():
     res_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_frangi.nii.gz'
 
     image = sitk.ReadImage(img_path)
-    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    img = sitk.GetArrayFromImage(image).astype(np.double)
     spacing = image.GetSpacing()
     origin = image.GetOrigin()
     direction = image.GetDirection()
 
     frangi = cf.frangi3D(img, eigenVectorType = 0)
-    res = sitk.GetImageFromArray(frangi)
+    res_arr = frangi['frangi'].astype(np.float32)
+    res = sitk.GetImageFromArray(res_arr)
     res.SetSpacing(spacing)
     res.SetOrigin(origin)
     res.SetDirection(direction)

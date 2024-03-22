@@ -35,8 +35,10 @@ struct Eigen3D{ // 3D 图像Hessian矩阵的特征值和特征向量
 struct EigenTemp{
     float* A;
     float* Q;
+    float* Q_temp;
     float* R;
     float* P;
+    float* AK;
 
     float* w1;
     float* w2;
