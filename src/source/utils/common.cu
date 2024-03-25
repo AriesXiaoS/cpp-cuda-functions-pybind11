@@ -3,7 +3,8 @@
 #include "check.cuh"
 
 
-void FreeSDM3D(SDM3D* x)
+template <typename T>
+void FreeSDM3D(SDM3D<T>* x)
 {
     delete[] x->xx;
     delete[] x->yy;
@@ -13,18 +14,25 @@ void FreeSDM3D(SDM3D* x)
     delete[] x->yz;
     delete x;
 }
+template void FreeSDM3D<float>(SDM3D<float>* x);
+template void FreeSDM3D<double>(SDM3D<double>* x);
 
 // 只是把hessian3D的子元素分配显存
-void CudaMallocSDM3D(SDM3D* item, int imageSize)
+template <typename T>
+void CudaMallocSDM3D(SDM3D<T>* item, int imageSize)
 {
-    CUDA_CHECK(cudaMalloc((void**)&item->xx, sizeof(float) * imageSize));
-    CUDA_CHECK(cudaMalloc((void**)&item->yy, sizeof(float) * imageSize));
-    CUDA_CHECK(cudaMalloc((void**)&item->zz, sizeof(float) * imageSize));
-    CUDA_CHECK(cudaMalloc((void**)&item->xy, sizeof(float) * imageSize));
-    CUDA_CHECK(cudaMalloc((void**)&item->xz, sizeof(float) * imageSize));
-    CUDA_CHECK(cudaMalloc((void**)&item->yz, sizeof(float) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->xx, sizeof(T) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->yy, sizeof(T) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->zz, sizeof(T) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->xy, sizeof(T) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->xz, sizeof(T) * imageSize));
+    CUDA_CHECK(cudaMalloc((void**)&item->yz, sizeof(T) * imageSize));
 }
-void CudaFreeSDM3D(SDM3D* item)
+template void CudaMallocSDM3D<float>(SDM3D<float>* item, int imageSize);
+template void CudaMallocSDM3D<double>(SDM3D<double>* item, int imageSize);
+
+template <typename T>
+void CudaFreeSDM3D(SDM3D<T>* item)
 {
     CUDA_CHECK(cudaFree(item->xx));
     CUDA_CHECK(cudaFree(item->yy));
@@ -34,6 +42,8 @@ void CudaFreeSDM3D(SDM3D* item)
     CUDA_CHECK(cudaFree(item->yz));
     delete item;
 }
+template void CudaFreeSDM3D<float>(SDM3D<float>* item);
+template void CudaFreeSDM3D<double>(SDM3D<double>* item);
 
 
 

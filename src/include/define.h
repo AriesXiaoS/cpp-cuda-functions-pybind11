@@ -1,51 +1,36 @@
 #ifndef _DEFINE_H
 #define _DEFINE_H
 
-// NAMES
-namespace EIGENVEC{
-    const int NONE = 0;
-    const int CARTESIAN = 1;
-    const int SPHERE = 2;
-}
+
+#define VEC_TYPE_NONE 0
+#define VEC_TYPE_CARTESIAN 1
+#define VEC_TYPE_SPHERE 2
+
 
 // STRUCTS
 struct Conv3DParam{
     int kernel_size;
     int img_shape[3];
 };
-struct QRIterParam{
-    int max_iters;
-    float tolerance;
-};
+
 
 // Second Derivative Matrix 3D
+template <typename T>
 struct SDM3D{
-    float* xx;
-    float* yy;
-    float* zz;
-    float* xy;
-    float* xz;
-    float* yz;
+    T* xx;
+    T* yy;
+    T* zz;
+    T* xy;
+    T* xz;
+    T* yz;
 };
 
+template <typename T>
 struct Eigen3D{ // 3D 图像Hessian矩阵的特征值和特征向量
-    float* eigenValues;
-    float* eigenVectors;
+    T* eigenValues;
+    T* eigenVectors;
 };
-struct EigenTemp{
-    float* A;
-    float* Q;
-    float* Q_temp;
-    float* R;
-    float* P;
-    float* AK;
 
-    float* w1;
-    float* w2;
-    float* H1;
-    float* H2;
-    float* h2;
-};
 
 
 

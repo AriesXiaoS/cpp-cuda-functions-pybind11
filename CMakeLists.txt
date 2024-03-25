@@ -17,7 +17,7 @@ else()
     cmake_policy(SET CMP0104 NEW)
 endif()
 
-project(pybind11-cuda-test LANGUAGES CXX C)
+project(cpp-cuda-functions-pybind11 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)

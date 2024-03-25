@@ -6,9 +6,9 @@
 #include "check.cuh"
 
 
-
-
-py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> kernel, int device){
+template <typename T>
+py::array_t<T> CudaConv3dTest(py::array_t<T> vec, py::array_t<T> kernel, int device)
+{
     auto buf = vec.request();
     auto buf_k = kernel.request();
     // check dim
@@ -31,11 +31,11 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
 
     //
     int padding_size = (buf_k.shape[0] - 1) / 2;
-    float* ptr = (float*)buf.ptr;
-    float* ptr_k = (float*)buf_k.ptr;
-    float* ptr_padded = new float[(buf.shape[0]+2*padding_size)*(buf.shape[1]+2*padding_size)*(buf.shape[2]+2*padding_size)];
+    T* ptr = (T*)buf.ptr;
+    T* ptr_k = (T*)buf_k.ptr;
+    T* ptr_padded = new T[(buf.shape[0]+2*padding_size)*(buf.shape[1]+2*padding_size)*(buf.shape[2]+2*padding_size)];
     // padding
-    PaddingFlattenedArr_3D(ptr, ptr_padded,
+    PaddingFlattenedArr_3D<T>(ptr, ptr_padded,
     buf.shape[0], buf.shape[1], buf.shape[2], 
     0, padding_size, padding_size, padding_size);
 
@@ -43,10 +43,10 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
     CUDA_CHECK(cudaGetLastError());
 
     // 分配显存空间
-    int size_bytes_padded = (buf.shape[0]+buf_k.shape[0]-1)*(buf.shape[1]+buf_k.shape[0]-1)*(buf.shape[2]+buf_k.shape[0]-1)*sizeof(float);
-    int size_bytes_kernel = buf_k.shape[0]*buf_k.shape[1]*buf_k.shape[2]*sizeof(float);
-    int size_bytes_res = buf.shape[0]*buf.shape[1]*buf.shape[2]*sizeof(float);
-    float* cuda_vec, *cuda_kernel, *cuda_res;
+    int size_bytes_padded = (buf.shape[0]+buf_k.shape[0]-1)*(buf.shape[1]+buf_k.shape[0]-1)*(buf.shape[2]+buf_k.shape[0]-1)*sizeof(T);
+    int size_bytes_kernel = buf_k.shape[0]*buf_k.shape[1]*buf_k.shape[2]*sizeof(T);
+    int size_bytes_res = buf.shape[0]*buf.shape[1]*buf.shape[2]*sizeof(T);
+    T* cuda_vec, *cuda_kernel, *cuda_res;
     CUDA_CHECK(cudaMalloc((void**)&cuda_vec, size_bytes_padded));
     CUDA_CHECK(cudaMalloc((void**)&cuda_kernel, size_bytes_kernel));
     CUDA_CHECK(cudaMalloc((void**)&cuda_res, size_bytes_res));
@@ -57,17 +57,17 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
 
     // kernel
     dim3 dimBlock(8, 8, 8);
-    dim3 dimGrid(ceil((float)buf.shape[0] / dimBlock.x), ceil((float)buf.shape[1] / dimBlock.y), ceil((float)buf.shape[2] / dimBlock.z));
+    dim3 dimGrid(ceil((T)buf.shape[0] / dimBlock.x), ceil((T)buf.shape[1] / dimBlock.y), ceil((T)buf.shape[2] / dimBlock.z));
 
     Conv3DParam param = { int(buf_k.shape[0]), 
                           {int(buf.shape[0]), int(buf.shape[1]), int(buf.shape[2])} };
     // Cuda Con v3D 
-    CudaConv3D<<<dimGrid, dimBlock>>>(cuda_vec, cuda_res, cuda_kernel, param);
+    CudaConv3D<T><<<dimGrid, dimBlock>>>(cuda_vec, cuda_res, cuda_kernel, param);
     CUDA_CHECK(cudaGetLastError());
     CUDA_CHECK(cudaDeviceSynchronize());
 
     // device -> host
-    float* res = new float[buf.shape[0]*buf.shape[1]*buf.shape[2]];
+    T* res = new T[buf.shape[0]*buf.shape[1]*buf.shape[2]];
     CUDA_CHECK(cudaMemcpy(res, cuda_res, size_bytes_res, cudaMemcpyDeviceToHost));
 
     // 释放显存空间
@@ -75,10 +75,10 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
     CUDA_CHECK(cudaFree(cuda_kernel));
     CUDA_CHECK(cudaFree(cuda_res));
 
-    auto result = py::array_t<float>(buf.shape[0]*buf.shape[1]*buf.shape[2]);
+    auto result = py::array_t<T>(buf.shape[0]*buf.shape[1]*buf.shape[2]);
 
     py::buffer_info buf_res = result.request();
-    float* ptr_res = (float*)buf_res.ptr;
+    T* ptr_res = (T*)buf_res.ptr;
     for(int i=0; i<buf.shape[0]*buf.shape[1]*buf.shape[2]; i++){
         ptr_res[i] = res[i];
     }
@@ -88,7 +88,8 @@ py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> ker
 }
 
 
-
+template py::array_t<float> CudaConv3dTest(py::array_t<float> vec, py::array_t<float> kernel, int device);
+template py::array_t<double> CudaConv3dTest(py::array_t<double> vec, py::array_t<double> kernel, int device);
 
 
 

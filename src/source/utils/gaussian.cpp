@@ -2,11 +2,12 @@
 #include "utils.h"
 #include "define.h"
 
+#include <cmath>
 
 template <typename T>
-SDM3D* GetGaussianKernels(T sigma, int kernelSize)
+SDM3D<T>* GetGaussianKernels(T sigma, int kernelSize)
 {
-    SDM3D *kernel = new SDM3D();
+    SDM3D<T> *kernel = new SDM3D<T>();
     int flatten_size = kernelSize * kernelSize * kernelSize;
     kernel->xx = new T[flatten_size];
     kernel->yy = new T[flatten_size];
@@ -44,7 +45,8 @@ SDM3D* GetGaussianKernels(T sigma, int kernelSize)
 
 
 
-template SDM3D* GetGaussianKernels<float>(float sigma, int kernelSize);
+template SDM3D<float>* GetGaussianKernels<float>(float sigma, int kernelSize);
+template SDM3D<double>* GetGaussianKernels<double>(double sigma, int kernelSize);
 
 
 

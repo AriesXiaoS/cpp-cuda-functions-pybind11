@@ -45,7 +45,17 @@ void CudaAdd(T* vec1, T* vec2, T* res, int num_elements){
 }
 
 
-py::array_t<float> AddNp(py::array_t<float> vec1, py::array_t<float> vec2, int device){
+template <typename T>
+py::array_t<T> AddNp(py::array_t<T> vec1, py::array_t<T> vec2, int device)
+{   
+    // c++ 17
+    // if constexpr (std::is_same<T, int>::value) {
+    //     std::cout << "Type is int" << std::endl;
+    // } else if constexpr (std::is_same<T, float>::value) {
+    //     std::cout << "Type is float" << std::endl;
+    // } else if constexpr (std::is_same<T, double>::value) {
+    //     std::cout << "Type is double" << std::endl;
+    // }
     //
     auto buf1 = vec1.request(), buf2 = vec2.request();
     // check dim
@@ -61,31 +71,33 @@ py::array_t<float> AddNp(py::array_t<float> vec1, py::array_t<float> vec2, int d
         throw std::runtime_error(strstr.str());
     }
     //
-    auto result = py::array_t<float>(buf1.size);
+    auto result = py::array_t<T>(buf1.size);
     py::buffer_info buf3 = result.request();
+
+    //获取numpy.ndarray 数据指针
+    T* ptr1 = (T*)buf1.ptr;
+    T* ptr2 = (T*)buf2.ptr;
+    T* ptr3 = (T*)buf3.ptr;
 
     if(device==-1){
         // use cpu
         //申请空间
-        //获取numpy.ndarray 数据指针
-        float* ptr1 = (float*)buf1.ptr;
-        float* ptr2 = (float*)buf2.ptr;
-        float* ptr3 = (float*)buf3.ptr;
-        //指针访问numpy.ndarray
         for (int i = 0; i < buf1.size; i++)
         {
             ptr3[i] = ptr1[i] + ptr2[i];
         }
-        return result;
     }else{        
         cudaSetDevice(device);
         CUDA_CHECK(cudaGetLastError());
-        CudaAdd<float>((float*)buf1.ptr, (float*)buf2.ptr, (float*)buf3.ptr, buf1.size);
+        CudaAdd<T>(ptr1, ptr2, ptr3, buf1.size);
     }
     result.resize(buf1.shape);
     return result;
 }
 
+
+template py::array_t<float> AddNp<float>(py::array_t<float> vec1, py::array_t<float> vec2, int device);
+template py::array_t<double> AddNp<double>(py::array_t<double> vec1, py::array_t<double> vec2, int device);
 
 
 

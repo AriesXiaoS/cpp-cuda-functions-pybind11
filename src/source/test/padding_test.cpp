@@ -2,7 +2,8 @@
 #include "utils.h"
 
 
-py::array_t<float> Padding3dTest(py::array_t<float> vec, float pad_value, int pad_size_0, int pad_size_1, int pad_size_2){
+template <typename T>
+py::array_t<T> padding3dNp(py::array_t<T> vec, T pad_value, int pad_size_0, int pad_size_1, int pad_size_2){
     auto buf = vec.request();
     // check dim
     if( buf.ndim != 3 ){
@@ -12,13 +13,13 @@ py::array_t<float> Padding3dTest(py::array_t<float> vec, float pad_value, int pa
     }
     //
     int new_size = (buf.shape[0]+2*pad_size_0)*(buf.shape[1]+2*pad_size_1)*(buf.shape[2]+2*pad_size_2);
-    auto result = py::array_t<float>(new_size);
+    auto result = py::array_t<T>(new_size);
     py::buffer_info buf_res = result.request();
-    float* ptr_res = (float*)buf_res.ptr;
+    T* ptr_res = (T*)buf_res.ptr;
 
-    float* ptr = (float*)buf.ptr;
+    T* ptr = (T*)buf.ptr;
 
-    PaddingFlattenedArr_3D(ptr, ptr_res,
+    PaddingFlattenedArr_3D<T>(ptr, ptr_res,
     buf.shape[0], buf.shape[1], buf.shape[2], 
     pad_value, pad_size_0, pad_size_1, pad_size_2);
 
@@ -26,5 +27,9 @@ py::array_t<float> Padding3dTest(py::array_t<float> vec, float pad_value, int pa
     
     return result;
 }
+
+template py::array_t<float> padding3dNp(py::array_t<float> vec, float pad_value, int pad_size_0, int pad_size_1, int pad_size_2);
+template py::array_t<double> padding3dNp(py::array_t<double> vec, double pad_value, int pad_size_0, int pad_size_1, int pad_size_2);
+
 
 

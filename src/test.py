@@ -3,27 +3,34 @@ import numpy as np
 import time
 import SimpleITK as sitk    
 
-# cf.device_info()
+# cf.printDeviceInfo()
 
 T = np.float32
+# T = np.float64
 SIZE = (10, 10, 10)
+# SIZE = (2,2,2)
 
 def test_add():
-    print('### Test add_np ###')
-    a = np.random.rand(*SIZE).astype(T)
-    b = np.random.rand(*SIZE).astype(T)
+    print('### Test addNp ###')
+    a = np.random.rand(*SIZE).astype(T) * 10
+    b = np.random.rand(*SIZE).astype(T) * 10
 
     res_np = a + b 
-    res_cuda = cf.add_np(a, b, 0) 
-    print(f'allclose: {np.allclose(res_cuda, res_np)}')
+    res_cuda = cf.addNp(a, b, 0) 
+    allclose = np.allclose(res_cuda, res_np)
+    print(f'allclose: {allclose}')
+    if not allclose:
+        print(f'res_np: \n{res_np}')
+        print(f'res_c: \n{res_cuda}')
 
 def test_padding():
     print('### Test padding ###')
     # padding
+    SIZE = (3,3,3)
     a = np.random.rand(*SIZE).astype(T)
     pad_val = 0.3
     pad_size = 2
-    res_cuda = cf.padding_3d_test(a, pad_val, pad_size, pad_size, pad_size)
+    res_cuda = cf.padding3D(a, pad_val, pad_size, pad_size, pad_size)
     res_np = np.pad(a, pad_size, mode='constant', constant_values=pad_val) # warm up
     print(f'allclose: {np.allclose(res_cuda, res_np)}')
 
@@ -40,13 +47,13 @@ def test_conv():
         return res
     #
 
-    A_SIZE = (10,10,10)
+    A_SIZE = (10,100,100)
     A = np.random.rand(*A_SIZE).astype(T)
     K_SIZE = (5,5,5)
     kernel = np.random.rand(*K_SIZE).astype(T)
 
     t0 = time.time()
-    res_cuda = cf.cuda_conv_3d_test(A, kernel, 0)
+    res_cuda = cf.cudaConvTest3D(A, kernel, 0)
     cuda_time = time.time() - t0
     t0 = time.time()
     res_np = conv3D_np(A, kernel)
@@ -138,8 +145,8 @@ def test_qr():
                 [3,4,5]]).astype(np.float32)
     print(f'A: \n{A}')
     qr_py = qrSplit(A)
-    qr_cpu = cf.qr_split_test_3x3(A.copy(), -1)
-    qr_cuda = cf.qr_split_test_3x3(A.copy(), 0)
+    qr_cpu = cf.qrSplitTest3x3(A.copy(), -1)
+    qr_cuda = cf.qrSplitTest3x3(A.copy(), 0)
     qr_np = np.linalg.qr(A.copy())
 
     def compareQRSplit(a, b, name):
@@ -178,8 +185,8 @@ def test_qr_eigen():
 
     eig_np = np.linalg.eig(A.copy())
     eig_py = qrEgis(A.copy())
-    eig_cpu = cf.qr_eigens_test_3x3(A.copy(),-1, 10, 0)
-    eig_cuda = cf.qr_eigens_test_3x3(A.copy(), -1, 100, 5e-4)
+    eig_cpu = cf.qrEigensTest3x3(A.copy(),-1, vecType=0)
+    eig_cuda = cf.qrEigensTest3x3(A.copy(), 0, vecType=0)
     print(f'np eig: \n{eig_np[0]}')
     print(f'py eig: \n{eig_py[0]}')
     print(f'cpu eig: \n{eig_cpu[0]}')
@@ -197,8 +204,8 @@ def test_hessian_eigen():
     A += A.T - np.diag(A.diagonal())
     print(A)
 
-    res = cf.hessian_eigens_test_3x3(A.copy())
-    eig_cuda = cf.qr_eigens_test_3x3(A.copy())
+    res = cf.hessianEigensTest3x3(A.copy())
+    eig_cuda = cf.qrEigensTest3x3(A.copy())
     eig_np = np.linalg.eig(A.copy())
 
     print(f'hessian eig: \n{res["eigenValues"]}')
@@ -215,12 +222,21 @@ def frangiTest():
     res_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_frangi.nii.gz'
 
     image = sitk.ReadImage(img_path)
-    img = sitk.GetArrayFromImage(image).astype(np.double)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
     spacing = image.GetSpacing()
     origin = image.GetOrigin()
     direction = image.GetDirection()
 
-    frangi = cf.frangi3D(img, eigenVectorType = 0)
+    t0 = time.time()
+
+    frangi = cf.frangi3D(img, alpha = 0.5, beta = 0.5,
+                         blackRidges = False,
+                        #  tolerance = 0, # 38.19
+                         tolerance = 1e-5, # 33.71
+                         eigenVectorType = 0)
+    
+    print(f'frangi time: {time.time() - t0:.6f}')
+
     res_arr = frangi['frangi'].astype(np.float32)
     res = sitk.GetImageFromArray(res_arr)
     res.SetSpacing(spacing)
@@ -232,8 +248,12 @@ def frangiTest():
 
 if __name__=='__main__':
     
-    # test_conv()
+    # test_add()
+    # test_padding()
+    # test_qr()
     # test_qr_eigen()
+
+    # test_conv()
 
     # test_hessian_eigen()
 

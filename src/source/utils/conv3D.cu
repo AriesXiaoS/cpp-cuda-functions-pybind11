@@ -2,9 +2,9 @@
 #include "define.h"
 #include "cuda.cuh"
 
-
-__global__ void CudaConv3D(float* input, float* output, 
-                           float* kernel, Conv3DParam param)
+template <typename T>
+__global__ void CudaConv3D(T* input, T* output, 
+                           T* kernel, Conv3DParam param)
 {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -14,7 +14,7 @@ __global__ void CudaConv3D(float* input, float* output,
         // int padded_size_0 = param.img_shape[0] + param.kernel_size - 1;
         int padded_size_1 = param.img_shape[1] + param.kernel_size - 1;
         int padded_size_2 = param.img_shape[2] + param.kernel_size - 1;
-        float sum = 0.0;
+        T sum = 0.0;
         int input_x, input_y, input_z;
         for (int i = 0; i < param.kernel_size; i++) {
             for (int j = 0; j < param.kernel_size; j++) {
@@ -33,7 +33,10 @@ __global__ void CudaConv3D(float* input, float* output,
     }
 }
 
-
+template __global__ void CudaConv3D<float>(float* input, float* output, 
+                                           float* kernel, Conv3DParam param);
+template __global__ void CudaConv3D<double>(double* input, double* output, 
+                                            double* kernel, Conv3DParam param);
 
 
 
