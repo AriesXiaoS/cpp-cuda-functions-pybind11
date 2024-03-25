@@ -222,18 +222,14 @@ def frangiTest():
     res_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_frangi.nii.gz'
 
     image = sitk.ReadImage(img_path)
-    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    img = sitk.GetArrayFromImage(image).astype(np.double)
     spacing = image.GetSpacing()
     origin = image.GetOrigin()
     direction = image.GetDirection()
 
     t0 = time.time()
-
-    frangi = cf.frangi3D(img, alpha = 0.5, beta = 0.5,
-                         blackRidges = False,
-                        #  tolerance = 0, # 38.19
-                         tolerance = 1e-5, # 33.71
-                         eigenVectorType = 0)
+    frangi = cf.frangi3D(img, cudaDimBlock = [6,6,6],
+                         verbose = 1)
     
     print(f'frangi time: {time.time() - t0:.6f}')
 

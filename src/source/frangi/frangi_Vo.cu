@@ -2,29 +2,6 @@
 #include "define.h"
 #include "cuda.cuh"
 
-// __device__ T alpha;
-// __device__ T beta;
-// __device__ T c;
-// __device__ bool black_ridges_d;
-// extern __device__ int imgShape_d[3];
-
-// __global__ void SetFrangiParams(
-//     int imgShape_0, int imgShape_1, int imgShape_2,
-//     T alpha, T beta, T c, bool black_ridges)
-// {
-//     int z = blockIdx.x * blockDim.x + threadIdx.x;
-//     int y = blockIdx.y * blockDim.y + threadIdx.y;
-//     int x = blockIdx.z * blockDim.z + threadIdx.z;    
-//     if(z==0 && y==0 && x==0){
-//         imgShape_0 = imgShape_0;
-//         imgShape_1 = imgShape_1;
-//         imgShape_2 = imgShape_2;
-//         alpha = alpha;
-//         beta = beta;
-//         c = c;
-//         black_ridges_d = black_ridges;
-//     }
-// }
 
 template <typename T>
 __global__ void CudaFrangiVo(Eigen3D<T> *eigen, T* output,

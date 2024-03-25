@@ -40,7 +40,6 @@ void CudaFreeSDM3D(SDM3D<T>* item)
     CUDA_CHECK(cudaFree(item->xy));
     CUDA_CHECK(cudaFree(item->xz));
     CUDA_CHECK(cudaFree(item->yz));
-    delete item;
 }
 template void CudaFreeSDM3D<float>(SDM3D<float>* item);
 template void CudaFreeSDM3D<double>(SDM3D<double>* item);

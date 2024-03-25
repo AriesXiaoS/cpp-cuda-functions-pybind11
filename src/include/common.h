@@ -21,7 +21,8 @@ template <typename T>
 map<string, py::array_t<T>> CudaFrangi3D(
     py::array_t<T> image, int device, std::vector<T> sigmas,
     T alpha, T beta, T gamma, bool blackRidges,
-    int maxIters, T tolerance, int eigenVectorType);
+    int maxIters, T tolerance, int eigenVectorType,
+    int verbose, std::vector<int> cudaDimBlock);
 
 
 

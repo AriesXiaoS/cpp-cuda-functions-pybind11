@@ -4,23 +4,84 @@
 
 PYBIND11_MODULE(cpp_cuda_functions, m)
 {
-    m.def("printDeviceInfo", &PrintDeviceInfo, "print CUDA device info");
 
-    m.def("frangi3D", CudaFrangi3D<float>, "frangi 3D image",
+    m.doc() = R"pbdoc(
+        Python Bindings for C++/CUDA-based Processing Functions
+        --------------------------------------------------------
+
+        This module provides Python bindings for C++/CUDA-accelerated processing functions.
+        
+        Functions:
+        - frangi3D
+          Computes vessel features of a 3D image using Frangi filtering.
+
+    )pbdoc";
+
+    m.def("frangi3D", CudaFrangi3D<float>, 
+        R"pbdoc(
+            Compute vessel features of a 3D image.
+
+            Args:
+                image (numpy.ndarray): Input 3D image.
+                device (int): GPU device index (default is 0).
+                sigmas (List[float]): Scale parameters for Gaussian Filtering (default is [0.82, 1, 1.5]).
+                alpha (float): plate sensitivity, range: (0, 1] (default is 0.5).
+                beta (float): blobness, range: (0, 1] (default is 0.5).
+                gamma (float): structuredness,, range: (0, +inf). if 0 : use half of maximum Hessian norm (default is 0).
+                blackRidges (bool): If True, focus on black tubular structure; otherwise, white (default is False).
+                maxIters (int): Maximum number of QR iterations (default is 30).
+                tolerance (float): Tolerance in QR convergence (default is 1e-5).
+                eigenVectorType (EigenVectorType): Type of eigenvectors (default is 0), 
+                    0: no eigenvectors 
+                    1: Cartesian eigenvectors
+                    2: Spherical eigenvectors
+                verbose (int): Control for verbose mode (default is 0).
+
+            Returns:
+                numpy.ndarray: Computed feature image.
+        )pbdoc",
         py::arg("image"), py::arg("device") = 0, 
         py::arg("sigmas") = std::vector<float>{0.82, 1, 1.5},
         py::arg("alpha") = 0.5, py::arg("beta") = 0.5, py::arg("gamma") = 0, 
         py::arg("blackRidges") = false,
         py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5, 
-        py::arg("eigenVectorType") = VEC_TYPE_CARTESIAN);
-    m.def("frangi3D", CudaFrangi3D<double>, "frangi 3D image",
+        py::arg("eigenVectorType") = VEC_TYPE_NONE,
+        py::arg("verbose") = 0,
+        py::arg("cudaDimBlock") = std::vector<int>{8, 8, 8});
+    // 这玩意直接重载的话 np.float64 输入进来还是以float32执行的 不知道咋回事
+    m.def("frangi3D_asDouble", CudaFrangi3D<double>, 
+        R"pbdoc(
+            Compute vessel features of a 3D image.
+
+            Args:
+                image (numpy.ndarray): Input 3D image.
+                device (int): GPU device index (default is 0).
+                sigmas (List[double]): Scale parameters for Gaussian Filtering (default is [0.82, 1, 1.5]).
+                alpha (double): plate sensitivity, range: (0, 1] (default is 0.5).
+                beta (double): blobness, range: (0, 1] (default is 0.5).
+                gamma (double): structuredness,, range: (0, +inf). if 0 : use half of maximum Hessian norm (default is 0).
+                blackRidges (bool): If True, focus on black tubular structure; otherwise, white (default is False).
+                maxIters (int): Maximum number of QR iterations (default is 30).
+                tolerance (double): Tolerance in QR convergence (default is 1e-5).
+                eigenVectorType (EigenVectorType): Type of eigenvectors (default is 0), 
+                    0: no eigenvectors 
+                    1: Cartesian eigenvectors
+                    2: Spherical eigenvectors
+                verbose (int): Control for verbose mode (default is 0).
+
+            Returns:
+                numpy.ndarray: Computed feature image.
+        )pbdoc",
         py::arg("image"), py::arg("device") = 0, 
         py::arg("sigmas") = std::vector<double>{0.82, 1, 1.5},
         py::arg("alpha") = 0.5, py::arg("beta") = 0.5, py::arg("gamma") = 0, 
         py::arg("blackRidges") = false,
         py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5, 
-        py::arg("eigenVectorType") = VEC_TYPE_CARTESIAN);
+        py::arg("eigenVectorType") = VEC_TYPE_NONE,
+        py::arg("verbose") = 0,
+        py::arg("cudaDimBlock") = std::vector<int>{8, 8, 8});
 
+    m.def("printDeviceInfo", &PrintDeviceInfo, "print CUDA device info");
 
 
 

@@ -56,8 +56,9 @@ __global__ void CudaHessianEigen(SDM3D<T> *hessian, Eigen3D<T> *eigen, T* HFnorm
                 int imgShape_0, int imgShape_1, int imgShape_2, 
                 int maxIters, T tolerance, int eigenVectorType);
 
-
-
+/**
+*  @brief 计算血管特征的响应函数 Vo
+*/
 template <typename T>
 __global__ void CudaFrangiVo(Eigen3D<T> *eigen, T* output,
             int imgShape_0, int imgShape_1, int imgShape_2, 
