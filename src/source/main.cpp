@@ -27,7 +27,8 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                 sigmas (List[float]): Scale parameters for Gaussian Filtering (default is [0.82, 1, 1.5]).
                 alpha (float): plate sensitivity, range: (0, 1] (default is 0.5).
                 beta (float): blobness, range: (0, 1] (default is 0.5).
-                gamma (float): structuredness,, range: (0, +inf). if 0 : use half of maximum Hessian norm (default is 0).
+                gamma (float): structuredness,, range: (0, +inf). 
+                    if 0 : use half of maximum Hessian norm (default is 0).
                 blackRidges (bool): If True, focus on black tubular structure; otherwise, white (default is False).
                 maxIters (int): Maximum number of QR iterations (default is 30).
                 tolerance (float): Tolerance in QR convergence (default is 1e-5).
@@ -43,7 +44,10 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                         # N = len(sigmas)
 
             Returns:
-                numpy.ndarray: Computed feature image.
+                dict: {
+                    "frangi": numpy.ndarray (Computed feature image, HxWxD),
+                    "vectors": numpy.ndarray (Computed eigenvectors, HxWxDxC) if eigenVectorType > 0,
+                }
         )pbdoc",
         py::arg("image"), py::arg("device") = 0, 
         py::arg("sigmas") = std::vector<float>{0.82, 1, 1.5},
@@ -68,7 +72,8 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                 sigmas (List[double]): Scale parameters for Gaussian Filtering (default is [0.82, 1, 1.5]).
                 alpha (double): plate sensitivity, range: (0, 1] (default is 0.5).
                 beta (double): blobness, range: (0, 1] (default is 0.5).
-                gamma (double): structuredness,, range: (0, +inf). if 0 : use half of maximum Hessian norm (default is 0).
+                gamma (double): structuredness,, range: (0, +inf). 
+                    if 0 : use half of maximum Hessian norm (default is 0).
                 blackRidges (bool): If True, focus on black tubular structure; otherwise, white (default is False).
                 maxIters (int): Maximum number of QR iterations (default is 30).
                 tolerance (double): Tolerance in QR convergence (default is 1e-5).
@@ -84,7 +89,10 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                         # N = len(sigmas)
 
             Returns:
-                numpy.ndarray: Computed feature image.
+                dict: {
+                    "frangi": numpy.ndarray (Computed feature image, HxWxD),
+                    "vectors": numpy.ndarray (Computed eigenvectors, HxWxDxC) if eigenVectorType > 0,
+                }
         )pbdoc",
         py::arg("image"), py::arg("device") = 0, 
         py::arg("sigmas") = std::vector<double>{0.82, 1, 1.5},
