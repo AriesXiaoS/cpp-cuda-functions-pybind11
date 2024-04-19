@@ -1,9 +1,7 @@
-import cpp_cuda_functions as cf
+import cpp_cuda_functions as ccf
 import numpy as np
 import time
 import SimpleITK as sitk    
-
-# cf.printDeviceInfo()
 
 T = np.float32
 # T = np.float64
@@ -16,7 +14,7 @@ def test_add():
     b = np.random.rand(*SIZE).astype(T) * 10
 
     res_np = a + b 
-    res_cuda = cf.addNp(a, b, 0) 
+    res_cuda = ccf.addNp(a, b, 0) 
     allclose = np.allclose(res_cuda, res_np)
     print(f'allclose: {allclose}')
     if not allclose:
@@ -30,7 +28,7 @@ def test_padding():
     a = np.random.rand(*SIZE).astype(T)
     pad_val = 0.3
     pad_size = 2
-    res_cuda = cf.padding3D(a, pad_val, pad_size, pad_size, pad_size)
+    res_cuda = ccf.padding3D(a, pad_val, pad_size, pad_size, pad_size)
     res_np = np.pad(a, pad_size, mode='constant', constant_values=pad_val) # warm up
     print(f'allclose: {np.allclose(res_cuda, res_np)}')
 
@@ -53,7 +51,7 @@ def test_conv():
     kernel = np.random.rand(*K_SIZE).astype(T)
 
     t0 = time.time()
-    res_cuda = cf.cudaConvTest3D(A, kernel, 0)
+    res_cuda = ccf.cudaConvTest3D(A, kernel, 0)
     cuda_time = time.time() - t0
     t0 = time.time()
     res_np = conv3D_np(A, kernel)
@@ -145,8 +143,8 @@ def test_qr():
                 [3,4,5]]).astype(np.float32)
     print(f'A: \n{A}')
     qr_py = qrSplit(A)
-    qr_cpu = cf.qrSplitTest3x3(A.copy(), -1)
-    qr_cuda = cf.qrSplitTest3x3(A.copy(), 0)
+    qr_cpu = ccf.qrSplitTest3x3(A.copy(), -1)
+    qr_cuda = ccf.qrSplitTest3x3(A.copy(), 0)
     qr_np = np.linalg.qr(A.copy())
 
     def compareQRSplit(a, b, name):
@@ -185,8 +183,8 @@ def test_qr_eigen():
 
     eig_np = np.linalg.eig(A.copy())
     eig_py = qrEgis(A.copy())
-    eig_cpu = cf.qrEigensTest3x3(A.copy(),-1, vecType=0)
-    eig_cuda = cf.qrEigensTest3x3(A.copy(), 0, vecType=0)
+    eig_cpu = ccf.qrEigensTest3x3(A.copy(),-1, vecType=0)
+    eig_cuda = ccf.qrEigensTest3x3(A.copy(), 0, vecType=0)
     print(f'np eig: \n{eig_np[0]}')
     print(f'py eig: \n{eig_py[0]}')
     print(f'cpu eig: \n{eig_cpu[0]}')
@@ -204,8 +202,8 @@ def test_hessian_eigen():
     A += A.T - np.diag(A.diagonal())
     print(A)
 
-    res = cf.hessianEigensTest3x3(A.copy())
-    eig_cuda = cf.qrEigensTest3x3(A.copy())
+    res = ccf.hessianEigensTest3x3(A.copy())
+    eig_cuda = ccf.qrEigensTest3x3(A.copy())
     eig_np = np.linalg.eig(A.copy())
 
     print(f'hessian eig: \n{res["eigenValues"]}')
@@ -217,19 +215,26 @@ def test_hessian_eigen():
     print(f'cuda eig: \n{eig_cuda[0]}')
     print(f'cuda eig vec: \n{eig_cuda[1]}')
 
+
+def callBack(i, N):
+    print(f'progress: {i}/{N}')
+
 def frangiTest():
     img_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_img.nii.gz'
     res_path = r'/home/HDD-16T-2022/sunxiao/temp/lung_frangi.nii.gz'
 
     image = sitk.ReadImage(img_path)
-    img = sitk.GetArrayFromImage(image).astype(np.double)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
     spacing = image.GetSpacing()
     origin = image.GetOrigin()
     direction = image.GetDirection()
 
+    VEC_TYPE = 0
     t0 = time.time()
-    frangi = cf.frangi3D(img, cudaDimBlock = [6,6,6],
-                         verbose = 1)
+    frangi = ccf.frangi3D(img, cudaDimBlock = [6,6,6], eigenVectorType = VEC_TYPE,
+                         verbose = 1,
+                         progressCallback_i_N = callBack,
+                         )
     
     print(f'frangi time: {time.time() - t0:.6f}')
 
@@ -238,12 +243,25 @@ def frangiTest():
     res.SetSpacing(spacing)
     res.SetOrigin(origin)
     res.SetDirection(direction)
-
     sitk.WriteImage(res, res_path)
+
+    if VEC_TYPE>0:
+        vec = frangi['vectors']
+        print(vec.shape)
+        for i in range(3):
+            vec_arr = vec[:,:,:,i]
+            vec_img = sitk.GetImageFromArray(vec_arr)
+            vec_img.SetSpacing(spacing)
+            vec_img.SetOrigin(origin)
+            vec_img.SetDirection(direction)
+            sitk.WriteImage(vec_img, res_path.replace('.nii.gz', f'_vec{i}.nii.gz'))
+
 
 
 if __name__=='__main__':
     
+    ccf.printDeviceInfo()
+
     # test_add()
     # test_padding()
     # test_qr()

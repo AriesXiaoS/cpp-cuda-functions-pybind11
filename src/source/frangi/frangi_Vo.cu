@@ -31,6 +31,9 @@ __global__ void CudaFrangiVo(Eigen3D<T> *eigen, T* output,
         output[idx] = (1.0 - exp( -Ra*Ra / (2* alpha*alpha)))
                     * exp( -Rb*Rb / (2* beta*beta))
                     * (1.0 - exp( -S*S / (2* c*c)));
+        if(isnan(output[idx])){
+            output[idx] = 0;
+        }
     }
 }
 

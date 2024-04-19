@@ -46,7 +46,7 @@ __device__ __host__ void QRSplit_3x3(T* A, T* Q, T* R);
 template <typename T>
 __device__ __host__ void QREigens_3x3(T* A, 
                                 T* eigenValues, T* eigenVectors,
-                                int maxIters, T tolerance, int vecType);
+                                int maxIters, T tolerance, int vecSize);
 
 /**
 *  @brief Hessian矩阵特征值计算
@@ -54,7 +54,7 @@ __device__ __host__ void QREigens_3x3(T* A,
 template <typename T>
 __global__ void CudaHessianEigen(SDM3D<T> *hessian, Eigen3D<T> *eigen, T* HFnorm,
                 int imgShape_0, int imgShape_1, int imgShape_2, 
-                int maxIters, T tolerance, int eigenVectorType);
+                int maxIters, T tolerance, int vecType);
 
 /**
 *  @brief 计算血管特征的响应函数 Vo
@@ -67,7 +67,7 @@ __global__ void CudaFrangiVo(Eigen3D<T> *eigen, T* output,
 
 
 
-
+__device__ __host__ int getVecSize(int vecType);
 
 
 

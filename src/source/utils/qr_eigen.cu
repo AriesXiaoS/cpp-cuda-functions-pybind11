@@ -181,7 +181,7 @@ __device__ __host__ void QRSplit_3x3(T* A, T* Q, T* R){
 template <typename T>
 __device__ __host__ void QREigens_3x3(T* A, 
                                 T* eigenValues, T* eigenVectors,
-                                int maxIters, T tolerance, int vecType)
+                                int maxIters, T tolerance, int vecSize)
 {
     //
     T Q[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -200,26 +200,20 @@ __device__ __host__ void QREigens_3x3(T* A,
         }
         // AK = Q_temp dot R
         MatrixDot3x3<T>(Q_temp, R, AK);
-        // printf("A %f %f %f \n", A[3], A[6], A[7]);
-        // printf(" no tolerance \n");
     }else{
-        // printf("start iter \n");
         for(int i=0; i<maxIters; i++){
             QRSplit_3x3<T>(A, Q_temp, R);
             MatrixDotSelf3x3<T>(Q, Q_temp);
             MatrixDot3x3<T>(R, Q_temp, A);
             MatrixDot3x3<T>(Q_temp, R, AK);
             if( abs(AK[3])<=tolerance && abs(AK[6])<=tolerance && abs(AK[7])<=tolerance){
-                // printf(" iter = %d  %f %f %f \n", i, AK[3], AK[6], AK[7]);
                 break;
             }
         }
     }
-    // printf("AK %f %f %f \n", AK[0], AK[4], AK[8]);
     eigenValues[0] = AK[0];
     eigenValues[1] = AK[4];
     eigenValues[2] = AK[8];
-    // printf("eigenValues %f %f %f \n", eigenValues[0], eigenValues[1], eigenValues[2]);
     // 排序 绝对值从小到大
     for(int i=0; i<2; i++){
         for(int j=i+1; j<3; j++){
@@ -229,22 +223,19 @@ __device__ __host__ void QREigens_3x3(T* A,
                 eigenValues[i] = eigenValues[j];
                 eigenValues[j] = temp;
                 // 特征向量
-                if(vecType > VEC_TYPE_NONE){
+                if(vecSize > 0){
                     for(int k=0; k<3; k++){
                         temp = Q[3*k+i];
                         Q[3*k+i] = Q[3*k+j];
                         Q[3*k+j] = temp;
                     }                
                 }
-                // else{
-                //     printf("!!! qr no vec !!!\n");                
-                // }
             }
         }
     }
-    if(vecType == VEC_TYPE_CARTESIAN){
-        // eigenVectors <= Q
-        MatrixCopy(Q, eigenVectors, 9);    
+    if(vecSize > 0){
+        // eigenVectors <= Q 这里都是 VEC_TYPE_CARTESIAN
+        MatrixCopy(Q, eigenVectors, 3);    
     }
 }
 
@@ -253,9 +244,9 @@ template __device__ __host__ void QRSplit_3x3<float>(float* A, float* Q, float* 
 template __device__ __host__ void QRSplit_3x3<double>(double* A, double* Q, double* R);
 
 template __device__ __host__ void QREigens_3x3<float>(float* A, 
-float* eigenValues, float* eigenVectors, int maxIters, float tolerance, int vecType);
+float* eigenValues, float* eigenVectors, int maxIters, float tolerance, int vecSize);
 template __device__ __host__ void QREigens_3x3<double>(double* A, 
-double* eigenValues, double* eigenVectors, int maxIters, double tolerance, int vecType);
+double* eigenValues, double* eigenVectors, int maxIters, double tolerance, int vecSize);
 
 
 

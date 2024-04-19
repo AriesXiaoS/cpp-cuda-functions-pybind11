@@ -60,24 +60,47 @@ void ConvHessian(T* paddedImage_d, SDM3D<T>* kernels, SDM3D<T>* hessian,
     delete kernels_d;
 }
 
+
 template <typename T>
-T* VoMax(T** outputs, int sigmaLen, int imageSize)
+void VoMax(T** outputs, T* result, int sigmaLen, int imageSize)
 {
-    T* maxOutput = new T[imageSize];
     for(int i=0; i<imageSize; i++)
     {
-        maxOutput[i] = outputs[0][i];
+        result[i] = outputs[0][i];
         for(int j=1; j<sigmaLen; j++)
         {
-            if(outputs[j][i] > maxOutput[i])
+            if(outputs[j][i] > result[i])
             {
-                maxOutput[i] = outputs[j][i];
+                result[i] = outputs[j][i];
+                
             }
         }
     }
-    return maxOutput;
 }
-
+template <typename T>
+void VoMax(T** outputs, T** vectors, T* VoResult, T* vecResult, 
+            int sigmaLen, int imageSize, int vecSize){
+    int max_i = 0;
+    for(int i=0; i<imageSize; i++)
+    {
+        VoResult[i] = outputs[0][i];
+        for(int j=1; j<sigmaLen; j++)
+        {
+            if(outputs[j][i] > VoResult[i])
+            {
+                VoResult[i] = outputs[j][i];
+                max_i = j;
+            }
+        }
+    }
+    //vec
+    for(int i=0; i<imageSize; i++){
+        for(int k=0; k<vecSize; k++)
+        {
+            vecResult[i * vecSize + k] = vectors[max_i][i * vecSize + k];
+        }
+    }
+}
 
 
 template <typename T>
@@ -85,7 +108,9 @@ map<string, py::array_t<T>> CudaFrangi3D(
     py::array_t<T> image, int device, std::vector<T> sigmas,
     T alpha, T beta, T gamma, bool blackRidges,
     int maxIters, T tolerance, int eigenVectorType,
-    int verbose, std::vector<int> cudaDimBlock)
+    int verbose, std::vector<int> cudaDimBlock,
+    py::function progressCallback_i_N
+    )
 {
     if(verbose >= 1){
         printf("Data type size: %d\n", int(sizeof(T)));
@@ -111,6 +136,8 @@ map<string, py::array_t<T>> CudaFrangi3D(
     {
         if(cudaDimBlock[i]<=0) throw std::runtime_error("cudaDimBlock must be positive");
     }
+    // vec size
+    int vecSize = getVecSize(eigenVectorType);
 
     cudaSetDevice(device);
     CUDA_CHECK(cudaGetLastError());
@@ -135,8 +162,9 @@ map<string, py::array_t<T>> CudaFrangi3D(
     Eigen3D<T>* eigen = new Eigen3D<T>();
     Eigen3D<T>* eigen_d;
     CUDA_CHECK(cudaMalloc((void**)&eigen->eigenValues, sizeof(T) *3 *imageSize));
-    if(eigenVectorType != VEC_TYPE_NONE){
-        CUDA_CHECK(cudaMalloc((void**)&eigen->eigenVectors, sizeof(T) *9 *imageSize));
+    if(vecSize > 0){
+        CUDA_CHECK(cudaMalloc((void**)&eigen->eigenVectors, 
+                            sizeof(T) * vecSize * imageSize));
     }
     CUDA_CHECK(cudaMalloc((void**)&eigen_d, sizeof(Eigen3D<T>)));
     CUDA_CHECK(cudaMemcpy(eigen_d, eigen, sizeof(Eigen3D<T>), cudaMemcpyHostToDevice));
@@ -144,7 +172,7 @@ map<string, py::array_t<T>> CudaFrangi3D(
     T* HFnorm = new T[imageSize];
     T* HFnorm_d;
     CUDA_CHECK(cudaMalloc((void**)&HFnorm_d, sizeof(T) *imageSize));
-    //
+    // Vo output
     T** outputs = new T*[sigmas.size()];
     for(int i=0; i<sigmas.size(); i++)
     {
@@ -152,6 +180,15 @@ map<string, py::array_t<T>> CudaFrangi3D(
     }
     T* output_d;
     CUDA_CHECK(cudaMalloc((void**)&output_d, sizeof(T) * imageSize));
+    // eigen vector output
+    T** outputs_eigen = new T*[sigmas.size()];
+    if(vecSize > 0){
+        for(int i=0; i<sigmas.size(); i++)
+        {
+            outputs_eigen[i] = new T[vecSize * imageSize];
+        }
+    }
+
 
 
     for(int i=0; i<sigmas.size(); i++)
@@ -186,7 +223,7 @@ map<string, py::array_t<T>> CudaFrangi3D(
             imgShape[0], imgShape[1], imgShape[2], maxIters, tolerance, eigenVectorType);        
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
-        // printf("CudaHessianEigen Done\n");
+        // printf("Cuda Hessian Eigen Done\n");
         T frangi_c;
         if(gamma <= 0){
             CUDA_CHECK(cudaMemcpy(HFnorm, HFnorm_d, sizeof(T) * imageSize, cudaMemcpyDeviceToHost));
@@ -194,6 +231,8 @@ map<string, py::array_t<T>> CudaFrangi3D(
         }else{
             frangi_c = gamma;
         }
+        // std::cout << "frangi_c: " << frangi_c << std::endl;
+        if(frangi_c<=0)frangi_c=1;
 
         CudaFrangiVo<T><<<dimGrid, dimBlock>>>(eigen_d, output_d,
             imgShape[0], imgShape[1], imgShape[2], alpha, beta, frangi_c, blackRidges);
@@ -201,6 +240,12 @@ map<string, py::array_t<T>> CudaFrangi3D(
         CUDA_CHECK(cudaDeviceSynchronize());
         
         CUDA_CHECK(cudaMemcpy(outputs[i], output_d, sizeof(T) * imageSize, cudaMemcpyDeviceToHost));
+        if(eigenVectorType != VEC_TYPE_NONE){
+            CUDA_CHECK(cudaMemcpy(eigen, eigen_d, sizeof(Eigen3D<T>), cudaMemcpyDeviceToHost));
+            CUDA_CHECK(cudaMemcpy(outputs_eigen[i], eigen->eigenVectors, 
+                                sizeof(T) * vecSize * imageSize, cudaMemcpyDeviceToHost));
+        }
+
         // free device
         CUDA_CHECK(cudaFree(paddedImage_d));
         // free host
@@ -210,6 +255,9 @@ map<string, py::array_t<T>> CudaFrangi3D(
         if(verbose >= 1){
             printf("%d/%d sigma %f done - ", i+1, int(sigmas.size()), sigmas[i]);
             printDuration(start, "iter");
+        }
+        if(progressCallback_i_N ){
+            progressCallback_i_N(i+1, sigmas.size());
         }
 
     }
@@ -225,14 +273,43 @@ map<string, py::array_t<T>> CudaFrangi3D(
     }
     CUDA_CHECK(cudaFree(eigen_d));
 
+    T* frangi = new T[imageSize];
+    T* result_vec = new T[vecSize * imageSize];
+    if(eigenVectorType == VEC_TYPE_NONE){
+        VoMax<T>(outputs, frangi, sigmas.size(), imageSize);
+    }else{
+        VoMax<T>(outputs, outputs_eigen, frangi, result_vec, sigmas.size(), imageSize, vecSize);
+    }
+    // VoMax<T>(outputs, frangi, sigmas.size(), imageSize);
 
-    T* frangi = VoMax<T>(outputs, sigmas.size(), imageSize);
+    T* sorted_arr = new T[imageSize];
+    for(int i=0; i<imageSize; i++){
+        if(std::isnan(frangi[i])){
+            frangi[i] = 0;
+        }
+        sorted_arr[i] = frangi[i];
+    }
+    std::sort(sorted_arr, sorted_arr + imageSize);
+    T frangi_max = sorted_arr[int(imageSize * 0.995)];
+    for(int i=0; i<imageSize; i++){
+        if(frangi[i] > frangi_max){
+            frangi[i] = frangi_max;
+        }
+        frangi[i] = frangi[i] / frangi_max;
+    }
+    
 
     auto frangi_pyArr = py::array_t<T>(imageSize, frangi);
     frangi_pyArr.resize({imgShape[0], imgShape[1], imgShape[2]});
 
     map<string, py::array_t<T>> result;
     result["frangi"] = frangi_pyArr;
+
+    if(eigenVectorType != VEC_TYPE_NONE){
+        auto vec_pyArr = py::array_t<T>(vecSize * imageSize, result_vec);
+        vec_pyArr.resize({imgShape[0], imgShape[1], imgShape[2], vecSize});
+        result["vectors"] = vec_pyArr;
+    }
 
     return result;
 
@@ -244,12 +321,14 @@ template map<string, py::array_t<float>> CudaFrangi3D<float>(
     py::array_t<float> image, int device, std::vector<float> sigmas,
     float alpha, float beta, float gamma, bool blackRidges,
     int maxIters, float tolerance, int eigenVectorType,
-    int verbose, std::vector<int> cudaDimBlock);
+    int verbose, std::vector<int> cudaDimBlock,
+    py::function progressCallback_i_N);
 template map<string, py::array_t<double>> CudaFrangi3D<double>(
     py::array_t<double> image, int device, std::vector<double> sigmas,
     double alpha, double beta, double gamma, bool blackRidges,
     int maxIters, double tolerance, int eigenVectorType,
-    int verbose, std::vector<int> cudaDimBlock);
+    int verbose, std::vector<int> cudaDimBlock,
+    py::function progressCallback_i_N);
 
 
 

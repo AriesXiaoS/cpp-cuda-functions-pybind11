@@ -11,10 +11,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 using namespace std;
 using namespace chrono;
 namespace py = pybind11;
+
+using PyCallbackFunc=std::function<void(py::object)>;
 
 // Frangi 
 template <typename T>
@@ -22,7 +25,8 @@ map<string, py::array_t<T>> CudaFrangi3D(
     py::array_t<T> image, int device, std::vector<T> sigmas,
     T alpha, T beta, T gamma, bool blackRidges,
     int maxIters, T tolerance, int eigenVectorType,
-    int verbose, std::vector<int> cudaDimBlock);
+    int verbose, std::vector<int> cudaDimBlock,
+    py::function progressCallback_i_N);
 
 
 

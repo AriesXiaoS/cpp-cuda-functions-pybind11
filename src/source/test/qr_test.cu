@@ -18,12 +18,12 @@ __global__ void QRSplitTestKernel_3x3(T* A, T* Q, T* R){
 
 template <typename T>
 __global__ void QREigensTestKernel_3x3(T* A, T* eigenValues, T* eigenVectors, 
-                                        int iters, T tolerance, int vecType){
+                                        int iters, T tolerance, int vecSize){
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int z = blockIdx.z * blockDim.z + threadIdx.z;
     if(x==0 && y==0 && z==0){
-        QREigens_3x3<T>(A, eigenValues, eigenVectors, iters, tolerance, vecType);
+        QREigens_3x3<T>(A, eigenValues, eigenVectors, iters, tolerance, vecSize);
     }
 }
 
@@ -116,8 +116,9 @@ std::vector<py::array_t<T>> QREigensTest_3x3(py::array_t<T> A, int device,
     auto eigenVector_buf = eigenVector_pyArray.request();
     T* eigenVector_ptr = (T*) eigenVector_buf.ptr;
 
+    int vecSize = getVecSize(vecType);
     if(device < 0){
-        QREigens_3x3(ptr, eigenValue_ptr, eigenVector_ptr, maxIters, tolerance, vecType);
+        QREigens_3x3(ptr, eigenValue_ptr, eigenVector_ptr, maxIters, tolerance, vecSize);
     }else{
         T* A_device, *eigenValue_device, *eigenVector_device;
         cudaSetDevice(device);
@@ -131,7 +132,7 @@ std::vector<py::array_t<T>> QREigensTest_3x3(py::array_t<T> A, int device,
         // Call the kernel
         dim3 dimBlock(1, 1, 1);
         dim3 dimGrid(1, 1, 1);
-        QREigensTestKernel_3x3<T><<<dimGrid, dimBlock>>>(A_device, eigenValue_device, eigenVector_device, maxIters, tolerance, vecType);
+        QREigensTestKernel_3x3<T><<<dimGrid, dimBlock>>>(A_device, eigenValue_device, eigenVector_device, maxIters, tolerance, vecSize);
         CUDA_CHECK(cudaGetLastError());
         CUDA_CHECK(cudaDeviceSynchronize());
         // Copy the result back
@@ -154,8 +155,8 @@ std::vector<py::array_t<T>> QREigensTest_3x3(py::array_t<T> A, int device,
 template std::vector<py::array_t<float>> QRSplitTest_3x3(py::array_t<float> A, int device);
 template std::vector<py::array_t<double>> QRSplitTest_3x3(py::array_t<double> A, int device);
 
-template std::vector<py::array_t<float>> QREigensTest_3x3(py::array_t<float> A, int device, int maxIters, float tolerance, int vecType);
-template std::vector<py::array_t<double>> QREigensTest_3x3(py::array_t<double> A, int device, int maxIters, double tolerance, int vecType);
+template std::vector<py::array_t<float>> QREigensTest_3x3(py::array_t<float> A, int device, int maxIters, float tolerance, int vecSize);
+template std::vector<py::array_t<double>> QREigensTest_3x3(py::array_t<double> A, int device, int maxIters, double tolerance, int vecSize);
 
 
 

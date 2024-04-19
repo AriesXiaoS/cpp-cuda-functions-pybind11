@@ -36,6 +36,11 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                     1: Cartesian eigenvectors
                     2: Spherical eigenvectors
                 verbose (int): Control for verbose mode (default is 0).
+                progressCallback_i_N (function): Progress callback function.
+                    e.g. 
+                    def progressCallback_i_N(i, N):
+                        print(f"Progress: {i}/{N}") 
+                        # N = len(sigmas)
 
             Returns:
                 numpy.ndarray: Computed feature image.
@@ -47,7 +52,11 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
         py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5, 
         py::arg("eigenVectorType") = VEC_TYPE_NONE,
         py::arg("verbose") = 0,
-        py::arg("cudaDimBlock") = std::vector<int>{8, 8, 8});
+        py::arg("cudaDimBlock") = std::vector<int>{6, 6, 6},
+        py::arg("progressCallback_i_N") = nullptr
+        );
+
+
     // 这玩意直接重载的话 np.float64 输入进来还是以float32执行的 不知道咋回事
     m.def("frangi3D_asDouble", CudaFrangi3D<double>, 
         R"pbdoc(
@@ -68,6 +77,11 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
                     1: Cartesian eigenvectors
                     2: Spherical eigenvectors
                 verbose (int): Control for verbose mode (default is 0).
+                progressCallback_i_N (function): Progress callback function.
+                    e.g. 
+                    def progressCallback_i_N(i, N):
+                        print(f"Progress: {i}/{N}") 
+                        # N = len(sigmas)
 
             Returns:
                 numpy.ndarray: Computed feature image.
@@ -79,7 +93,9 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
         py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5, 
         py::arg("eigenVectorType") = VEC_TYPE_NONE,
         py::arg("verbose") = 0,
-        py::arg("cudaDimBlock") = std::vector<int>{8, 8, 8});
+        py::arg("cudaDimBlock") = std::vector<int>{6, 6, 6},
+        py::arg("progressCallback_i_N") = nullptr
+        );
 
     m.def("printDeviceInfo", &PrintDeviceInfo, "print CUDA device info");
 

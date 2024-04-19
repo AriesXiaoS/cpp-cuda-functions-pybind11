@@ -6,6 +6,11 @@
 #define VEC_TYPE_CARTESIAN 1
 #define VEC_TYPE_SPHERE 2
 
+#define VEC_TYPE_CARTESIAN_SIZE 3
+#define VEC_TYPE_SPHERE_SIZE 3
+
+#define PI 3.1415926535
+
 
 // STRUCTS
 struct Conv3DParam{

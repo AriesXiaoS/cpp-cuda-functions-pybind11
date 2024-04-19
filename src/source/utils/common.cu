@@ -1,7 +1,7 @@
 #include "utils.h"
+#include "define.h"
 #include "cuda.cuh"
 #include "check.cuh"
-
 
 template <typename T>
 void FreeSDM3D(SDM3D<T>* x)
@@ -45,7 +45,19 @@ template void CudaFreeSDM3D<float>(SDM3D<float>* item);
 template void CudaFreeSDM3D<double>(SDM3D<double>* item);
 
 
+__device__ __host__ int getVecSize(int vecType){
+    if(vecType == VEC_TYPE_CARTESIAN){
+        return VEC_TYPE_CARTESIAN_SIZE;
+    }else if(vecType == VEC_TYPE_SPHERE){
+        return VEC_TYPE_SPHERE_SIZE;
+    }
 
+
+    else{
+        return 0;
+    }
+
+}
 
 
 
