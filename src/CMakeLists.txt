@@ -23,6 +23,7 @@ set_target_properties( cpp_cuda_functions
                        PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
                        
 configure_file(test.py test.py COPYONLY)
+# 复制py_test目录
 
 
 # 

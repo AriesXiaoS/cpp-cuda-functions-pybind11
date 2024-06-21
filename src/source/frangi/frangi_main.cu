@@ -7,7 +7,6 @@
 #include <chrono>   
 using namespace chrono;
 
-
 void printDuration(std::chrono::time_point<std::chrono::system_clock> start, 
  std::string msg){
     std::chrono::time_point<std::chrono::system_clock> end;

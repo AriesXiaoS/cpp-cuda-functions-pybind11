@@ -1,6 +1,6 @@
 import cpp_cuda_functions as ccf
 import numpy as np
-import time
+import time, os
 import SimpleITK as sitk    
 
 T = np.float32
@@ -256,21 +256,152 @@ def frangiTest():
             vec_img.SetDirection(direction)
             sitk.WriteImage(vec_img, res_path.replace('.nii.gz', f'_vec{i}.nii.gz'))
 
+#####
+def saveNii(arr, save_path, spacing, origin, direction):
+    res_img = sitk.GetImageFromArray(arr)
+    res_img.SetSpacing(spacing)
+    res_img.SetOrigin(origin)
+    res_img.SetDirection(direction)
+    sitk.WriteImage(res_img, save_path)
+
+
+
+def fuzzyObjectTest():
+    arr = np.zeros((20,20,20), dtype=np.float32)
+    arr[:10,:12,:15] = 1
+    res_path = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1/test1.nii.gz'
+    res_img = sitk.GetImageFromArray(arr)
+    sitk.WriteImage(res_img, res_path)
+    res = ccf.fuzzyObjectTest(arr)
+    wh = np.where(res==1)
+    print(res.shape)
+    res_path = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1/test2.nii.gz'
+    res_img = sitk.GetImageFromArray(res)
+    res_img.SetSpacing([0.5,0.5,0.5])
+    sitk.WriteImage(res_img, res_path)
+
+    n = len(wh[0])
+    print(n)
+    print(10*12*15)
+
+def fdtTest():
+    print('### Test FDT ###')
+    img_path = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1/img.nii.gz'
+    res_path = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1/test.nii.gz'
+
+    image = sitk.ReadImage(img_path)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    spacing = image.GetSpacing()
+    origin = image.GetOrigin()
+    direction = image.GetDirection()
+
+    print(img.shape)
+
+    img = np.zeros((20,20,20), dtype=np.float32)
+    img[:10,:12,:15] = 1
+
+    print("start fdt")
+    t0 = time.time()
+    res = ccf.fdt3D(img, spacing)
+    print(f"end fdt {time.time()-t0:.6f}")
+    # 15s
+
+    res_img = sitk.GetImageFromArray(res)
+    res_img.SetSpacing(spacing)
+    sitk.WriteImage(res_img, res_path)
+
+
+def msoTest():
+
+    print('### Test MSO ###')
+
+    data_dir = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1'
+    img_path = os.path.join(data_dir, "img.nii.gz")
+    fdt_path = os.path.join(data_dir, "test_fdt.nii.gz")
+    
+
+    image = sitk.ReadImage(img_path)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    spacing = image.GetSpacing()
+    origin = image.GetOrigin()
+    direction = image.GetDirection()
+
+    print(img.shape)
+
+    # img = np.zeros((20,20,20), dtype=np.float32)
+    # img[:10,:12,:15] = 1
+
+    if not os.path.exists(fdt_path):
+        print("start fdt")
+        t0 = time.time()
+        fdt = ccf.fdt3D(img, spacing)
+        print(f"end fdt {time.time()-t0:.6f}")
+        saveNii(fdt, fdt_path, spacing, origin, direction)
+    else:
+        fdt = sitk.GetArrayFromImage(sitk.ReadImage(fdt_path)).astype(np.float32)
+
+    mso = ccf.msoTest(img, fdt, spacing)
+
+    res_path = os.path.join(data_dir, "test_fdt_normed.nii.gz")
+    saveNii(mso, res_path, spacing, origin, direction)
+
+
+def AStarTest():
+    print('### Test A* ###')
+    data_dir = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1'
+    img_path = os.path.join(data_dir, "img.nii.gz")
+    fdt_path = os.path.join(data_dir, "test_fdt.nii.gz")
+
+    image = sitk.ReadImage(fdt_path)
+    img = sitk.GetArrayFromImage(image).astype(np.float32)
+    spacing = image.GetSpacing()
+    origin = image.GetOrigin()
+    direction = image.GetDirection()
+
+    start_itksnap = [80,94,181]
+    end_itksnap = [88,102,181]
+
+    start = [x-1 for x in start_itksnap]
+    end = [x-1 for x in end_itksnap]
+    start = start[::-1]
+    end = end[::-1]
+
+    print(f'start: {start} end: {end}')
+    res = ccf.AStarTest(img, start, end, spacing)
+    print("success", res)
+    # return
+
+    arr = np.zeros_like(img, dtype=np.uint8)
+    
+    for p in res:
+        arr[p[0], p[1], p[2]] = 1
+        
+    save_path = os.path.join(data_dir, "test_AStar.nii.gz")
+    saveNii(arr, save_path, spacing, origin, direction)
+
 
 
 if __name__=='__main__':
     
-    ccf.printDeviceInfo()
+    # ccf.printDeviceInfo()
 
     # test_add()
     # test_padding()
     # test_qr()
     # test_qr_eigen()
-
     # test_conv()
 
     # test_hessian_eigen()
 
-    frangiTest()
+    # frangiTest()
+
+    ### FDT ###
+    # fuzzyObjectTest()
+    # fdtTest()
+
+    msoTest()
+    # AStarTest()
+
+
     
 

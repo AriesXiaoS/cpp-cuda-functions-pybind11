@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <map>
 #include <typeinfo>
+#include <vector>
+#include <array>
+#include <cmath>
+
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -28,8 +32,11 @@ map<string, py::array_t<T>> CudaFrangi3D(
     int verbose, std::vector<int> cudaDimBlock,
     py::function progressCallback_i_N);
 
-
-
+// FDT
+template <typename T>
+py::array_t<T> fdt_3d(
+    py::array_t<T> image, std::vector<float> spacing
+);
 
 
 
@@ -61,6 +68,19 @@ map<string, py::array_t<T>> HessianEigenTest_3x3(
     py::array_t<T> A, int vecType,
     int device, int maxIters, T tolerance);
 
+//
+template <typename T>
+py::array_t<T> testFuzzyObject(py::array_t<T> array);
 
+// template <typename T>
+// py::array_t<T> testFDT(py::array_t<T> array, std::vector<float> py_spacing);
+
+template <typename T>
+py::array_t<T> testMSO(py::array_t<T> array, py::array_t<T> fdt, std::vector<float> spacing);
+
+std::vector<std::vector<int>> testAStar(py::array_t<float> array, 
+std::vector<int> start, 
+std::vector<int> end, 
+std::vector<float> spacing);
 
 #endif 

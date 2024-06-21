@@ -108,6 +108,9 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
     m.def("printDeviceInfo", &PrintDeviceInfo, "print CUDA device info");
 
 
+    // FDT
+    m.def("fdt3D", fdt_3d<float>, "fuzzy distance transform 3D", 
+        py::arg("image"), py::arg("spacing"));
 
 
 
@@ -152,9 +155,20 @@ PYBIND11_MODULE(cpp_cuda_functions, m)
         py::arg("A"), py::arg("vecType") = 1, py::arg("device") = 0, 
         py::arg("maxIters") = 30, py::arg("tolerance") = 1e-5 );
 
+    //
+    m.def("fuzzyObjectTest", testFuzzyObject<float>, "test fuzzy object",
+        py::arg("array"));
 
+    // m.def("fdtTest", testFDT<float>, "test fdt",
+    //     py::arg("array"), py::arg("spacing"));
 
+    m.def("msoTest", testMSO<float>, "test mso",
+        py::arg("array"), py::arg("fdt"), py::arg("spacing") 
+    );
 
+    m.def("AStarTest", testAStar, "test A*",
+        py::arg("array"), py::arg("start"), py::arg("end"), py::arg("spacing")
+    );
 
 }
 
