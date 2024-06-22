@@ -5,6 +5,7 @@
 #include "define.h"
 
 #include <iostream>
+#include <memory>
 
 struct AStarPoint{
     
@@ -17,6 +18,7 @@ struct AStarPoint{
     float G;
     float H;
     AStarPoint* parent;
+    // std::AStarPoint* parent;
 
     // 重载 == 运算符
     bool operator==(const AStarPoint& q) const {
@@ -68,9 +70,9 @@ private:
     std::vector<Voxel> result_path;
     float result_distance = -1;
 
-    bool isInOpenList(AStarPoint *p);
-    bool isInCloseList(AStarPoint *p);
-    int hanldOnePoint(AStarPoint *p);
+    bool isInOpenList(AStarPoint* p);
+    bool isInCloseList(AStarPoint* p);
+    int hanldOnePoint(AStarPoint* p);
     void freeList();
 
 public:

@@ -1,9 +1,6 @@
 #include "A_star.h"
 
 
-
-
-
 VoxelAStar::VoxelAStar(float* arr, std::array<float, 3> input_spacing, 
                         std::array<int, 3> input_shape):
     img(arr), spacing(input_spacing), shape(input_shape)
@@ -18,22 +15,22 @@ void VoxelAStar::initStartEnd(Voxel start, Voxel end)
     end_voxel = end;
 }
 
-bool VoxelAStar::isInOpenList(AStarPoint *p)
+bool VoxelAStar::isInOpenList(AStarPoint* p)
 {
-    for(auto q : open_list){
-        if(*p == *q) return true;
+    for(int i=0; i<open_list.size(); i++){
+        if(*p == *open_list[i]) return true;
     }
     return false;
 }
-bool VoxelAStar::isInCloseList(AStarPoint *p)
+bool VoxelAStar::isInCloseList(AStarPoint* p)
 {
-    for(auto q : close_list){
-        if(*p == *q) return true;
+    for(int i=0; i<close_list.size(); i++){
+        if(*p == *close_list[i]) return true;
     }
     return false;
 }
 
-int VoxelAStar::hanldOnePoint(AStarPoint *p)
+int VoxelAStar::hanldOnePoint(AStarPoint* p)
 {
     // 对当前方格的 26 个相邻方格的每一个方格
     for(int dz=-1; dz<=1; dz++){
@@ -52,10 +49,13 @@ int VoxelAStar::hanldOnePoint(AStarPoint *p)
                     //q 是相邻方格
                     Voxel v = Voxel(z, y, x, shape);
                     AStarPoint *q = new AStarPoint(v);
+
                     if(isInCloseList(q) || img[q->idx]==0){
-                        delete q;
+                        // delete q;
                         continue;
                     }
+                    //
+                    q->setParent(p);
                     //
                     float dG = sqrt(
                         pow(dz*spacing[0], 2) +
@@ -63,7 +63,6 @@ int VoxelAStar::hanldOnePoint(AStarPoint *p)
                         pow(dx*spacing[2], 2)
                     ) * 0.5 * (img[p->idx] + img[q->idx]);
                     if(!isInOpenList(q)){ // q 不在 open list 中
-                        q->setParent(p);
                         float H = sqrt(
                             pow((end_voxel.z - q->z)*spacing[0], 2) +
                             pow((end_voxel.y - q->y)*spacing[1], 2) +
@@ -74,7 +73,6 @@ int VoxelAStar::hanldOnePoint(AStarPoint *p)
                     }else{ // q 在 open list 中
                         float newG = p->G + dG;
                         if(newG < q->G){
-                            q->setParent(p);
                             q->setG(newG);
                         }
                     }
@@ -112,7 +110,8 @@ void VoxelAStar::Update()
             }
         }
         //从open list中删除 加入close list
-        AStarPoint *p = open_list[min_F_i];
+        // AStarPoint *p = open_list[min_F_i];
+        AStarPoint* p = open_list[min_F_i];
         close_list.push_back(p);
         open_list.erase(open_list.begin() + min_F_i);
         // 判断是否到达终点
@@ -128,7 +127,7 @@ void VoxelAStar::Update()
     if(result_found==1){
         result_path.clear();
         // 从终点开始回溯
-        AStarPoint *p = close_list[close_list.size()-1];
+        AStarPoint* p = close_list[close_list.size()-1];
         result_distance = p->G;
         result_path.push_back(Voxel(p->z, p->y, p->x, p->idx));
         while(p->parent!=nullptr){
@@ -147,13 +146,13 @@ void VoxelAStar::freeList()
 {
     if(open_list.size()==0 && close_list.size()==0) return;
 
-    for (AStarPoint* point : open_list) {
-        delete point;
-    }
+    // for (AStarPoint* point : open_list) {
+    //     delete point;
+    // }
 
-    for (AStarPoint* point : close_list) {
-        delete point;
-    }
+    // for (AStarPoint* point : close_list) {
+    //     delete point;
+    // }
     
     open_list.clear();
     close_list.clear();
