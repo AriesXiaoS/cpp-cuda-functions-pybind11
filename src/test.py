@@ -315,6 +315,7 @@ def msoTest():
 
     print('### Test MSO ###')
 
+    data_dir = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test0'
     data_dir = r'/home/HDD-16T-2022/sunxiao/Code/test_data/MSO-GP-FDT/test1'
     img_path = os.path.join(data_dir, "img.nii.gz")
     fdt_path = os.path.join(data_dir, "test_fdt.nii.gz")
@@ -343,6 +344,7 @@ def msoTest():
     mso = ccf.msoTest(img, fdt, spacing)
 
     res_path = os.path.join(data_dir, "test_fdt_normed.nii.gz")
+    res_path = os.path.join(data_dir, "test_Smax.nii.gz")
     saveNii(mso, res_path, spacing, origin, direction)
 
 
@@ -393,15 +395,19 @@ if __name__=='__main__':
 
     # test_hessian_eigen()
 
-    # frangiTest()
+    frangiTest()
 
     ### FDT ###
     # fuzzyObjectTest()
     # fdtTest()
 
+    # AStarTest()
+
     # msoTest()
-    AStarTest()
 
 
+"""
+
+nice -n 19 python test.py
     
-
+"""

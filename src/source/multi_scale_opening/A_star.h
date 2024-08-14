@@ -7,6 +7,11 @@
 #include <iostream>
 #include <memory>
 
+/**
+v1 传统指针 
+v2 不用指针new 直接创建在vector中 牺牲空间
+
+ */
 struct AStarPoint{
     
     int z;
@@ -21,7 +26,7 @@ struct AStarPoint{
     // std::AStarPoint* parent;
 
     // 重载 == 运算符
-    bool operator==(const AStarPoint& q) const {
+    bool operator==(const AStarPoint q) const {
         return  z==q.z && y==q.y && x==q.x;
     }
 
@@ -73,7 +78,6 @@ private:
     bool isInOpenList(AStarPoint* p);
     bool isInCloseList(AStarPoint* p);
     int hanldOnePoint(AStarPoint* p);
-    void freeList();
 
 public:
     VoxelAStar(float* arr, std::array<float, 3> input_spacing, 
@@ -87,6 +91,7 @@ public:
 
     std::vector<std::vector<int>> getPathList();
     float getDistance();
+    void freeList();
 };
 
 

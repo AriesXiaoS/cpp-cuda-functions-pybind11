@@ -7,5 +7,5 @@
 build
 build2
 _build
-cpp_cuda_functions
+cpp_cuda_functions*
 py_test

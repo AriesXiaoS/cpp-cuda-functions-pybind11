@@ -24,8 +24,11 @@ std::vector<float> spacing)
                         Voxel(end[0], end[1], end[2], shape));
     astar.Update();
 
-    return astar.getPathList();
+    std::vector<std::vector<int>> res = astar.getPathList();
 
+    astar.freeList();
+
+    return res;
 }
 
 

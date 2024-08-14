@@ -22,14 +22,14 @@ std::vector<float> spacing)
     mso.setFDT(fdt_p);
     mso.Excute();
 
-    // float* res = new float[size]{0};
-    // for(int i=0; i<size; i++){
-    //     if(mso.isSmax_arr[i]){
-    //         res[i] = 1;
-    //     }
-    // }
+    float* res = new float[size]{0};
+    for(int i=0; i<size; i++){
+        if(mso.isSmax_arr[i]){
+            res[i] = 1;
+        }
+    }
 
-    float* res = mso.getNormedFDT();
+    // float* res = mso.getNormedFDT();
 
 
     auto result = py::array_t<T>(size, res);

@@ -4,6 +4,9 @@
 #include <iostream>
 #include <cmath>
 
+#include "../utils/progress_bar.h"
+
+using namespace progresscpp;
 
 MSO3D::MSO3D(float* arr, std::array<float, 3> input_spacing, 
                         std::array<int, 3> input_shape)
@@ -17,8 +20,6 @@ MSO3D::MSO3D(float* arr, std::array<float, 3> input_spacing,
     // size = shape[0]*shape[1]*shape[2];
 
     isSmax_arr = new bool[size]{false};
-
-    // astar = VoxelAStar(arr, input_spacing, input_shape);
 
     fdt_normed = new float[size]{0};
 }
@@ -55,7 +56,7 @@ void MSO3D::computeSmax()
     for(int i=0; i<size; i++){
         if(img_O[i]>0){
             Voxel p = Voxel(i, shape);
-            std::vector<Voxel> Nlp = getNlp(p, 2);
+            std::vector<Voxel> Nlp = getNlp(p, 1);
             bool isSmax = true;
             for(auto& q : Nlp){
                 if(fdt[q.idx] > fdt[p.idx]){
@@ -82,21 +83,40 @@ float MSO3D::getLocalScale(Voxel p)
         if(q == p){
             return fdt[q.idx];
         }
-        astar.initStartEnd(p, q);
-        astar.Update();
-        float dist = astar.getDistance();
+        
+        VoxelAStar astar_ = VoxelAStar(img_O, spacing, shape);
+        astar_.initStartEnd(p, q);
+        astar_.Update();
+        float dist = astar_.getDistance();
+
+        // float dist = sqrt(
+        //     pow(spacing[0]*(p.z-q.z), 2) +
+        //     pow(spacing[1]*(p.y-q.y), 2) +
+        //     pow(spacing[2]*(p.x-q.x), 2)
+        // )*0.5*(fdt[p.idx]+fdt[q.idx]);
+
+
         if(dist < min_dist){
             min_dist = dist;
             min_voxel = q;
         }
+
+        astar_.freeList();
     }
     return fdt[min_voxel.idx];
 }
 void MSO3D::normalizeFDT()
 {
+
+    std::cout << "normalizeFDT" << std::endl;
+    ProgressBar progressBar(size, 70);
     for(int i=0; i<size; i++){
         fdt_normed[i] = fdt[i] / getLocalScale(Voxel(i, shape));
+        // std::cout << "\r" << i << "/" << size;
+        ++progressBar;
+        progressBar.display();
     }
+    progressBar.done();
 }
 float* MSO3D::getNormedFDT()
 {
@@ -110,7 +130,7 @@ float* MSO3D::getNormedFDT()
 void MSO3D::Excute()
 {
     computeSmax();
-    normalizeFDT();
+    // normalizeFDT();
 }
 
 

@@ -41,6 +41,12 @@ Compute vessel features of a 3D image.
 }
 ```
 
+## 对于pack
+可能需要添加到环境变量 LD_LIBRARY_PATH
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sunxiao/cpp_cuda_functions_SM61
+```
+
 ## pybind11-cuda
 
 Starting point for GPU accelerated python libraries
@@ -67,7 +73,9 @@ If you use cmake version >= 3.18, you can use [variable CMAKE_CUDA_ARCHITECTURES
 mkdir build; cd build
 ## provide a default cuda hardware architecture to build for
 cmake -DCMAKE_CUDA_ARCHITECTURES="75" -DPython3_EXECUTABLE=`which python` .. && make
-# cmake -DCMAKE_CUDA_ARCHITECTURES="86" -DPython3_EXECUTABLE=`which python` .. && make
+cmake -DCMAKE_CUDA_ARCHITECTURES="61" -DPython3_EXECUTABLE=`which python` .. && make
+cmake -DCMAKE_CUDA_ARCHITECTURES="86" -DPython3_EXECUTABLE=`which python` .. && make
+# 注意算力 https://blog.csdn.net/shaojie_wang/article/details/121117277
 ```
 
 Please note that specifiying `Python3_EXECUTABLE` is not required, but recommended if you have multiple python executable on your system (e.g. one from OS, another from conda, etc...); this way you can control which python installation will be used.
